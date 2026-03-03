@@ -3,10 +3,6 @@
 import { motion } from 'framer-motion';
 import { Star, Award, Users, Heart, Truck, Shield } from 'lucide-react';
 
-// ─── Brand tokens (rose palette) ─────────────────────────────────────────────
-// deep:    #6B1F2A   accent: #C96E82   blush: #F0C4CC
-// stone:   #F5E6E8   ivory: #FFF8F8    muted: #A0525E
-
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
@@ -15,30 +11,37 @@ const fade = (delay = 0) => ({
 });
 
 const features = [
-  { icon: Star,   title: 'Premium Quality',      description: 'Every piece is handpicked for exceptional craftsmanship and lasting beauty.' },
-  { icon: Award,  title: 'Award Winning',         description: 'Recognised for excellence in bridal fashion and service across India.' },
-  { icon: Users,  title: 'Trusted by Thousands',  description: 'Over 10,000 brides have chosen us for their most unforgettable moments.' },
-  { icon: Heart,  title: 'Passion for Fashion',   description: 'We believe every woman deserves to feel extraordinary on her special day.' },
+  { icon: Star, title: 'Premium Quality', description: 'Every piece is handpicked for exceptional craftsmanship and lasting beauty.' },
+  { icon: Award, title: 'Award Winning', description: 'Recognised for excellence in bridal fashion and service across Tamil Nadu.' },
+  { icon: Users, title: 'Trusted by Hundreds', description: 'Brides across Salem have chosen us for their most unforgettable moments.' },
+  { icon: Heart, title: 'Passion for Fashion', description: 'We believe every woman deserves to feel extraordinary on her special day.' },
 ];
 
 const stats = [
-  { number: '10,000+', label: 'Happy Customers' },
-  { number: '500+',    label: 'Dresses Available' },
-  { number: '50+',     label: 'Jewellery Pieces' },
-  { number: '5',       label: 'Years Experience' },
+  { number: '1000+', label: 'Happy Customers' },
+  { number: '300+', label: 'Dresses Available' },
+  { number: '50+', label: 'Jewellery Pieces' },
+  { number: '3', label: 'Years Experience' },
 ];
 
 const team = [
-  { name: 'Priya Sharma',  role: 'Founder & Creative Director', bio: 'With over 15 years in bridal fashion, Priya brings passion and expertise to every collection.' },
-  { name: 'Rahul Mehta',   role: 'Operations Manager',          bio: 'Ensures seamless operations and exceptional customer experience across all touchpoints.' },
-  { name: 'Anjali Patel',  role: 'Lead Designer',               bio: 'Creates stunning designs that blend traditional elegance with contemporary style.' },
+  {
+    name: 'Tamil Elakiya',
+    role: 'CEO & Founder · Creative Director',
+    bio: 'The visionary behind Nirali Sai Boutique, Tamil Elakiya combines her passion for fashion design with her expertise as a professional bridal make-up artist. An idea generator at heart, she brings high-skill craftsmanship and an artist\'s eye to every collection.',
+  },
+  {
+    name: 'Nehru Krishnan',
+    role: 'Managing Director · Financial Investor',
+    bio: 'Husband of Tamil Elakiya and the backbone of the business, Nehru Krishnan is a seasoned businessman running a legacy arecanut trade. As MD, he provides unwavering support and financial investment, enabling the boutique to grow from strength to strength.',
+  },
 ];
 
 const values = [
-  { icon: Shield, label: 'Trust',       sub: 'Built through consistent excellence' },
-  { icon: Heart,  label: 'Passion',     sub: 'For beauty and craftsmanship' },
-  { icon: Truck,  label: 'Reliability', sub: 'On-time delivery, every time' },
-  { icon: Star,   label: 'Excellence',  sub: 'In every stitch and detail' },
+  { icon: Shield, label: 'Trust', sub: 'Built through consistent excellence' },
+  { icon: Heart, label: 'Passion', sub: 'For beauty and craftsmanship' },
+  { icon: Truck, label: 'Reliability', sub: 'On-time delivery, every time' },
+  { icon: Star, label: 'Excellence', sub: 'In every stitch and detail' },
 ];
 
 export default function AboutPage() {
@@ -80,15 +83,15 @@ export default function AboutPage() {
           <div style={{ position: 'absolute', top: 0, right: 0, width: 420, height: 420, background: 'radial-gradient(circle, #F0C4CC 0%, transparent 70%)', opacity: 0.25, pointerEvents: 'none' }} />
 
           <motion.div {...fade(0)} style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
-            <span className="label-tag">Est. 2019 · Hyderabad</span>
+            <span className="label-tag">Est. August 2022 · Salem</span>
             <h1 className="section-title" style={{ fontSize: 'clamp(48px, 7vw, 88px)', marginBottom: 28 }}>
               Our <em>Story</em>
             </h1>
             <div className="gold-bar" style={{ margin: '0 auto 28px' }} />
             <p className="body-text" style={{ fontSize: 17, maxWidth: 560, margin: '0 auto' }}>
-              At Nirali Sai Boutique, we believe every woman deserves to feel extraordinary. 
-              Since 2019, we've been crafting unforgettable experiences through our exquisite 
-              collection of bridal wear and fine jewellery.
+              At Nirali Sai Boutique, we believe every woman deserves to feel extraordinary.
+              Since August 2022, we've been crafting unforgettable bridal experiences from the
+              heart of Salem — at Pookodai Complex, Alagapuram.
             </p>
           </motion.div>
         </section>
@@ -103,19 +106,21 @@ export default function AboutPage() {
             <div className="gold-bar" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p className="body-text">
-                What started as a small boutique in Hyderabad has grown into a beloved destination 
-                for brides across India. Our journey began with a simple vision: to make every 
-                woman feel like a queen on her special day.
+                Nirali Sai Boutique was born in August 2022 from the creative vision of
+                Tamil Elakiya — a passionate fashion designer and skilled bridal make-up artist.
+                Nestled in the Pookodai Complex, Alagapuram, Salem, our boutique began with a
+                simple dream: to make every bride feel like a queen on her most special day.
               </p>
               <p className="body-text">
-                Today, we offer an extensive collection of handpicked dresses, traditional wear, 
-                and stunning jewellery — each piece a testament to craftsmanship, heritage, and 
-                timeless beauty.
+                Backed by the steadfast support of Managing Director Nehru Krishnan, whose
+                business acumen and financial investment gave wings to that dream, Nirali Sai
+                Boutique has grown into Salem's most trusted destination for bridal fashion.
               </p>
               <p className="body-text">
-                We understand that your occasion deserves nothing less than perfection. That's why 
-                we've built our reputation on exceptional quality, personalised service, and an 
-                unwavering commitment to making your dreams come true.
+                Today, we offer a handpicked collection of dresses, traditional bridal wear,
+                and stunning jewellery — each piece a testament to craftsmanship, heritage,
+                and timeless beauty. We understand that your occasion deserves nothing less
+                than perfection.
               </p>
             </div>
           </motion.div>
@@ -144,7 +149,7 @@ export default function AboutPage() {
               background: '#FFF8F8',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 6,
             }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: '#6B1F2A', lineHeight: 1 }}>5</span>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: '#6B1F2A', lineHeight: 1 }}>3</span>
               <span style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C96E82' }}>Years</span>
             </div>
           </motion.div>
@@ -223,7 +228,7 @@ export default function AboutPage() {
             <div className="gold-bar" style={{ margin: '0 auto' }} />
           </motion.div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, maxWidth: 900, margin: '0 auto' }}>
             {team.map((m, i) => (
               <motion.div
                 key={i}
@@ -265,9 +270,18 @@ export default function AboutPage() {
               </h2>
               <div style={{ width: 40, height: 1, background: '#C96E82', marginBottom: 36 }} />
               {[
-                { title: 'Quality First',         desc: 'We never compromise. Every piece undergoes rigorous quality checks to ensure perfection.' },
-                { title: 'Customer Centric',      desc: 'Your satisfaction is our priority. We go above and beyond to create memorable experiences.' },
-                { title: 'Heritage & Innovation', desc: 'We honour traditional craftsmanship while embracing modern innovation.' },
+                {
+                  title: 'Quality First',
+                  desc: 'We never compromise. Every piece undergoes rigorous quality checks to ensure perfection before reaching our brides.',
+                },
+                {
+                  title: 'Customer Centric',
+                  desc: 'Your satisfaction is our priority. From first fitting to final bridal look, we go above and beyond to create memorable experiences.',
+                },
+                {
+                  title: 'Heritage & Innovation',
+                  desc: 'We honour traditional South Indian craftsmanship while embracing contemporary design to celebrate every bride\'s unique story.',
+                },
               ].map((v, i) => (
                 <motion.div key={i} {...fade(i * 0.1)} style={{ marginBottom: 32, paddingLeft: 20, borderLeft: '1px solid rgba(240,196,204,0.3)' }}>
                   <h4 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: '#FFF8F8', marginBottom: 6 }}>{v.title}</h4>
