@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { playfairDisplay, dmSans } from '@/lib/fonts';
-import { getDresses } from '@/lib/api';
-import type { Dress } from '@nirali-sai/types';
+import { getNewArrivals } from '@/lib/api';
+import type { Product } from '@nirali-sai/types';
 import { useRouter } from 'next/navigation';
 
 export default function NewArrivalsGrid() {
@@ -15,12 +15,33 @@ export default function NewArrivalsGrid() {
     const fetchNewArrivals = async () => {
       try {
         console.log('Fetching products...');
-        // Fetch all products from the database
-        const response = await getDresses({ limit: 4 });
+        // Fetch products, max 4 items
+        const response = await getNewArrivals(4);
         console.log('API Response:', response);
-        if (response.success) {
-          console.log('Products data:', response.data?.data);
-          setProducts(response.data?.data || []);
+        if (response.success && response.data) {
+          console.log('Products data:', response.data);
+          // The response data actually contains an array inside it based on the api.ts return type if we inspect carefully
+          // getNewArrivals returns { success: boolean, data: Product[], count: number } wrapped in ApiResponse
+          // Wait, the getNewArrivals returns ApiResponse<{ success: boolean, data: Product[], count: number }>
+          // Which means response.data is an object { success, data, count }. So we need response.data.data.slice()
+
+          const productList = Array.isArray(response.data)
+            ? response.data
+            : (response.data as any).data || [];
+
+          // Deduplicate based on product ID
+          const uniqueProducts: any[] = [];
+          const seenIds = new Set();
+
+          for (const product of productList) {
+            const id = product.id || product._id;
+            if (id && !seenIds.has(id)) {
+              seenIds.add(id);
+              uniqueProducts.push(product);
+            }
+          }
+
+          setProducts(uniqueProducts.slice(0, 4));
         } else {
           console.error('Failed to fetch new arrivals:', response.error?.message);
           // Fallback to sample products with real images
@@ -557,7 +578,7 @@ export default function NewArrivalsGrid() {
                   }}
                 ></div>
 
-                {/* Quick Reserve button */}
+                {/* Content Overlay that slides up on hover */}
                 <div
                   className="absolute bottom-0 left-0 right-0 feat-quick"
                   style={{
@@ -567,37 +588,71 @@ export default function NewArrivalsGrid() {
                     right: 0,
                     padding: '16px',
                     transform: 'translateY(100%)',
-                    transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    background: 'rgba(26,26,46,0.3)',
+                    backdropFilter: 'blur(4px)',
                   }}
                 >
                   <button
-                    className={`${dmSans.className} w-full feat-quick-btn`}
+                    className={`${dmSans.className} w-full`}
                     style={{
                       width: '100%',
-                      background: 'rgba(192,67,106,0.92)',
+                      background: 'rgba(192,67,106,1)',
                       fontSize: '0.65rem',
-                      fontWeight: 500,
-                      letterSpacing: '0.2em',
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
                       color: '#FAF7F0',
-                      padding: '12px',
+                      padding: '10px',
                       textTransform: 'uppercase',
                       border: 'none',
                       outline: 'none',
                       cursor: 'pointer',
-                      backdropFilter: 'blur(4px)'
+                      borderRadius: '2px',
                     }}
                     onMouseEnter={(e) => {
                       (e.target as HTMLElement).style.background = '#A83860';
                     }}
                     onMouseLeave={(e) => {
-                      (e.target as HTMLElement).style.background = 'rgba(192,67,106,0.92)';
+                      (e.target as HTMLElement).style.background = 'rgba(192,67,106,1)';
                     }}
                     onClick={() => {
-                      // Navigate to booking flow with this product
-                      router.push(`/book/dress?dressId=${product.id}`);
+                      router.push(`/book/dress?dressId=${product.id || product._id}`);
                     }}
                   >
-                    Quick Reserve
+                    Reserve Now
+                  </button>
+                  <button
+                    className={`${dmSans.className} w-full`}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255,255,255,0.95)',
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                      color: '#1A1A2E',
+                      padding: '10px',
+                      textTransform: 'uppercase',
+                      border: '1px solid #1A1A2E',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      borderRadius: '2px',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLElement).style.background = '#F0F0F0';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.95)';
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Simple alert placeholder for Add to Cart
+                      alert(`Added ${product.name} to cart!`);
+                    }}
+                  >
+                    Add to Cart
                   </button>
                 </div>
               </div>
@@ -641,7 +696,7 @@ export default function NewArrivalsGrid() {
                       color: '#C0436A'
                     }}
                   >
-                    ₹{product.price.toLocaleString()}
+                    Rate: ₹{product.price?.toLocaleString()}
                   </span>
 
                   <span

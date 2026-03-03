@@ -1,19 +1,19 @@
-import { 
-  User, 
-  Address, 
-  WishlistItem, 
-  Dress, 
-  BookedSlot, 
-  Jewellery, 
-  Product, 
-  Artist, 
-  Booking, 
-  Order, 
-  Review, 
-  Coupon, 
-  LoyaltyTransaction, 
-  ApiResponse, 
-  PaginatedResponse 
+import {
+  User,
+  Address,
+  WishlistItem,
+  Dress,
+  BookedSlot,
+  Jewellery,
+  Product,
+  Artist,
+  Booking,
+  Order,
+  Review,
+  Coupon,
+  LoyaltyTransaction,
+  ApiResponse,
+  PaginatedResponse
 } from '@nirali-sai/types';
 
 // Base fetcher function
@@ -21,11 +21,11 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
   // Use relative path for API routes (works in both local and Vercel)
   // In serverless/edge environments, Next.js handles relative paths correctly
   const url = `/api${endpoint}`;
-  
+
   // Get JWT token from wherever it's stored (cookies, localStorage, etc.)
   // In a real app, you might use a cookie library or next-auth
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -75,11 +75,11 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 // Auth API functions
-export async function register(userData: { 
-  name: string; 
-  email: string; 
-  phone: string; 
-  password: string 
+export async function register(userData: {
+  name: string;
+  email: string;
+  phone: string;
+  password: string
 }): Promise<ApiResponse<{ user: User; token: string }>> {
   return fetcher('/auth/register', {
     method: 'POST',
@@ -155,8 +155,16 @@ export async function getDresses(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/dresses${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
+}
+
+export async function getNewArrivals(limit: number = 4): Promise<ApiResponse<{
+  success: boolean,
+  data: Product[],
+  count: number
+}>> {
+  return fetcher(`/products?limit=${limit}`);
 }
 
 export async function getDressBySlug(slug: string): Promise<ApiResponse<Dress>> {
@@ -164,7 +172,7 @@ export async function getDressBySlug(slug: string): Promise<ApiResponse<Dress>> 
 }
 
 export async function checkDressAvailability(
-  dressId: string, 
+  dressId: string,
   date: string
 ): Promise<ApiResponse<{ available: boolean; slots: BookedSlot[] }>> {
   return fetcher(`/dresses/${dressId}/availability?date=${date}`);
@@ -199,7 +207,7 @@ export async function getMyBookings(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/bookings/me${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
@@ -241,7 +249,7 @@ export async function getJewellery(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/jewellery${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
@@ -289,7 +297,7 @@ export async function getProducts(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
@@ -329,7 +337,7 @@ export async function getMyOrders(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/orders/me${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
@@ -376,7 +384,7 @@ export async function getArtists(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/artists${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
@@ -385,7 +393,7 @@ export async function getArtistBySlug(slug: string): Promise<ApiResponse<Artist>
 }
 
 export async function getArtistAvailability(
-  artistId: string, 
+  artistId: string,
   month: string
 ): Promise<ApiResponse<Record<string, boolean>>> {
   return fetcher(`/artists/${artistId}/availability/${month}`);
@@ -436,7 +444,7 @@ export async function getMyAppointments(filters?: {
   }
   const queryString = params.toString();
   const endpoint = `/appointments/me${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
@@ -455,7 +463,7 @@ export async function submitReview(reviewData: {
 }
 
 export async function getReviews(
-  productId: string, 
+  productId: string,
   productType: 'dress' | 'jewellery' | 'product' | 'artist',
   filters?: {
     sortBy?: 'newest' | 'oldest' | 'highest-rated' | 'lowest-rated' | 'most-helpful';
@@ -466,7 +474,7 @@ export async function getReviews(
   const params = new URLSearchParams();
   params.append('productId', productId);
   params.append('productType', productType);
-  
+
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -474,19 +482,19 @@ export async function getReviews(
       }
     });
   }
-  
+
   const queryString = params.toString();
   const endpoint = `/reviews${queryString ? `?${queryString}` : ''}`;
-  
+
   return fetcher(endpoint);
 }
 
 // Payments API functions
-export async function createRazorpayOrder(amount: number): Promise<ApiResponse<{ 
-  id: string; 
-  razorpayOrderId: string; 
-  amount: number; 
-  currency: string; 
+export async function createRazorpayOrder(amount: number): Promise<ApiResponse<{
+  id: string;
+  razorpayOrderId: string;
+  amount: number;
+  currency: string;
 }>> {
   return fetcher('/payments/create-order', {
     method: 'POST',

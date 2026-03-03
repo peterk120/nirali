@@ -74,7 +74,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch products from MongoDB
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const limitQuery = searchParams.get('limit');
+    const limit = limitQuery ? parseInt(limitQuery, 10) : 0;
+
+    // Sort logic already has `{ createdAt: -1 }` to handle the 'latest first' rule naturally, meaning no backend change needed for auto-update logic!
+    const productsQuery = Product.find(query).sort({ createdAt: -1 });
+
+    if (limit > 0) {
+      productsQuery.limit(limit);
+    }
+
+    const products = await productsQuery;
 
     return Response.json({
       success: true,
