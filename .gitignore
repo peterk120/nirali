@@ -55,5 +55,5 @@ yarn-debug.log*
 yarn-error.log*
 
 # pnpm
-pnpm-lock.yaml
-.vercel
+# pnpm-lock.yaml
+# .vercel
