@@ -26,9 +26,9 @@ User Uploads Image → Next.js API Route (Serverless Function) → Cloudinary SD
    - `/api/upload` - Unsigned uploads as fallback
    
 #### 2. **Cloudinary Library** (`lib/cloudinary.ts`)
-   - Uses relative paths (`/api/upload-signed`) instead of absolute URLs
-   - No `localhost:3001` references
-   - Compatible with both local development and Vercel
+   - Uses absolute URLs with `VERCEL_URL` or `NEXT_PUBLIC_BASE_URL`
+   - Falls back to `http://localhost:3001` for local development
+   - Compatible with both local and Vercel serverless environments
 
 #### 3. **Product Creation API** (`app/api/products/route.ts`)
    - Properly handles `FormData` from multipart form submissions
@@ -113,8 +113,13 @@ Set these in **Vercel Dashboard → Project Settings → Environment Variables**
      const formData = new FormData();
      formData.append('file', file);
      
-     // Call serverless API route (relative path works in Vercel!)
-     const response = await fetch('/api/upload-signed', {
+     // Construct absolute URL for serverless environments
+     const baseUrl = process.env.VERCEL_URL 
+       ? `https://${process.env.VERCEL_URL}`
+       : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+     
+     // Call API route with absolute URL
+     const response = await fetch(`${baseUrl}/api/upload-signed`, {
        method: 'POST',
        body: formData,
      });
