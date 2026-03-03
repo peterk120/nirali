@@ -1,0 +1,4 @@
+productName,description,category,price,stock,sku,size,color,fabric,imageName
+"Test Product 1","Test description 1","Test Category",1000,5,"TEST-001","Medium","Red","Cotton","test1.jpg"
+"Test Product 2","Test description 2","Test Category",1500,3,"TEST-002","Large","Blue","Silk","test2.jpg"
+"Test Product 3","Test description 3","Test Category",2000,7,"TEST-003","Small","Green","Linen","test3.jpg"

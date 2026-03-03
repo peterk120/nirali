@@ -1,0 +1,27 @@
+{
+  "name": "@nirali-sai/ui",
+  "version": "0.0.1",
+  "main": "./index.tsx",
+  "types": "./index.tsx",
+  "sideEffects": false,
+  "scripts": {
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
+    "lucide-react": "^0.292.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-select": "^2.0.0",
+    "class-variance-authority": "^0.7.0"
+  }
+}
