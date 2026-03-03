@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // Real-time upload monitoring endpoint
 import { NextRequest } from 'next/server';
 

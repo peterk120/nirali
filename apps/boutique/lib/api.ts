@@ -18,8 +18,9 @@ import {
 
 // Base fetcher function
 async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-  const url = `${baseUrl}${endpoint}`;
+  // Use relative path for API routes (works in both local and Vercel)
+  // In serverless/edge environments, Next.js handles relative paths correctly
+  const url = `/api${endpoint}`;
   
   // Get JWT token from wherever it's stored (cookies, localStorage, etc.)
   // In a real app, you might use a cookie library or next-auth

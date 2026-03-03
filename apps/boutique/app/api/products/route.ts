@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { uploadFile } from '../../../lib/cloudinary';
 import connectToDatabase from '../../../lib/mongodb';
@@ -60,6 +61,10 @@ export async function POST(request: NextRequest) {
       
       if (productInfo) {
         productData = JSON.parse(productInfo);
+        console.log('Parsed productData from JSON:', productData);
+        // Ensure brand and storeType are set from parsed JSON
+        if (!productData.brand) productData.brand = 'boutique';
+        if (!productData.storeType) productData.storeType = 'boutique';
       } else {
         // If product info wasn't sent as JSON string, extract from form fields
         productData = {
@@ -70,8 +75,21 @@ export async function POST(request: NextRequest) {
           size: formData.get('size') as string,
           description: formData.get('description') as string,
           stock: formData.get('stock') as string,
+          brand: formData.get('brand') as string || 'boutique',
+          storeType: formData.get('storeType') as string || 'boutique',
         };
+        console.log('Extracted productData from form fields:', productData);
       }
+      
+      // Final safety check - ensure brand and storeType are always set
+      if (!productData.brand) {
+        productData.brand = 'boutique';
+      }
+      if (!productData.storeType) {
+        productData.storeType = 'boutique';
+      }
+      
+      console.log('Final productData before upload:', productData);
       
       // Process image upload if provided
       console.log('File received:', { 
@@ -124,6 +142,8 @@ export async function POST(request: NextRequest) {
       cloudinary_public_id: imagePublicId,
       description: productData.description,
       stock: Number(productData.stock) || 0,
+      brand: productData.brand || 'boutique',
+      storeType: productData.storeType || 'boutique',
       status: Number(productData.stock) > 0 ? 'Active' : 'Out of Stock'
     });
 

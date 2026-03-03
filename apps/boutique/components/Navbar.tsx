@@ -145,12 +145,15 @@ export default function Navbar() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 40px',
-          height: 36,
+          padding: 'clamp(8px, 2vw, 0 40px)',
+          height: 'auto',
+          minHeight: 36,
+          flexWrap: 'wrap',
+          gap: '8px'
         }}
       >
-        <span>Free delivery on bookings above ₹5,000 &nbsp;·&nbsp; Pan-India Service</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <span style={{ fontSize: 'clamp(9px, 2vw, 11px)' }}>Free delivery on bookings above ₹5,000 &nbsp;·&nbsp; Pan-India Service</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           {/* Language switcher */}
           <div style={{ display: 'flex', gap: 4 }}>
             {languages.map(l => (
@@ -197,11 +200,11 @@ export default function Navbar() {
           style={{
             maxWidth: 1280,
             margin: '0 auto',
-            padding: '0 40px',
+            padding: 'clamp(12px, 3vw, 0 40px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            height: 68,
+            height: 'clamp(60px, 10vh, 68px)',
           }}
         >
           {/* Logo */}
@@ -209,7 +212,7 @@ export default function Navbar() {
             <span
               style={{
                 fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 26,
+                fontSize: 'clamp(20px, 4vw, 26px)',
                 fontWeight: 400,
                 color: '#6B1F2A',
                 letterSpacing: '0.02em',
@@ -221,7 +224,7 @@ export default function Navbar() {
             <span
               style={{
                 fontFamily: "'Jost', sans-serif",
-                fontSize: 9,
+                fontSize: 'clamp(7px, 2vw, 9px)',
                 fontWeight: 500,
                 letterSpacing: '0.38em',
                 color: '#C96E82',
@@ -565,7 +568,7 @@ export default function Navbar() {
               style={{
                 position: 'fixed',
                 top: 0, right: 0, bottom: 0,
-                width: 'min(320px, 85vw)',
+                width: 'min(320px, 90vw)',
                 background: '#FFF8F8',
                 zIndex: 70,
                 display: 'flex',

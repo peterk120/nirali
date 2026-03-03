@@ -53,7 +53,7 @@ const css = `
   }
   .hero-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(42px, 6vw, 76px);
+    font-size: clamp(32px, 5vw, 76px);
     font-weight: 300;
     line-height: 1.05;
     letter-spacing: -0.01em;
@@ -65,7 +65,7 @@ const css = `
     color: var(--umber);
   }
   .hero-meta {
-    font-size: 13px;
+    font-size: clamp(11px, 2vw, 13px);
     letter-spacing: 0.1em;
     color: var(--mink);
   }
@@ -85,10 +85,14 @@ const css = `
     padding: 0 60px 80px;
   }
   @media (max-width: 900px) {
-    .catalog-body { grid-template-columns: 1fr; padding: 0 24px 60px; }
+    .catalog-body { grid-template-columns: 1fr; padding: 0 20px 60px; }
     .catalog-sidebar { display: none; }
-    .catalog-hero { padding: 48px 24px 40px; }
+    .catalog-hero { padding: 48px 20px 40px; }
     .mobile-filter-bar { display: flex !important; }
+  }
+  @media (max-width: 480px) {
+    .catalog-body { padding: 0 16px 40px; }
+    .catalog-hero { padding: 36px 16px 32px; }
   }
 
   /* ── Sidebar ── */
@@ -234,6 +238,13 @@ const css = `
   @media (max-width: 1100px) {
     .dress-grid { grid-template-columns: repeat(2, 1fr); }
   }
+  @media (max-width: 768px) {
+    .dress-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .dress-grid-wrapper { padding: 0; }
+  }
+  @media (max-width: 480px) {
+    .dress-grid { grid-template-columns: 1fr; }
+  }
 
   /* ── Dress card (grid) ── */
   .luxury-card {
@@ -260,7 +271,7 @@ const css = `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 48px;
+    font-size: clamp(32px, 5vw, 48px);
     color: var(--mink);
   }
   .card-overlay {
@@ -272,17 +283,18 @@ const css = `
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 24px;
+    padding: clamp(16px, 3vw, 24px);
   }
   .card-overlay-name {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
+    font-size: clamp(16px, 3vw, 20px);
     font-weight: 300;
     color: var(--ivory);
     margin-bottom: 4px;
+    line-height: 1.3;
   }
   .card-overlay-price {
-    font-size: 13px;
+    font-size: clamp(11px, 2vw, 13px);
     letter-spacing: 0.1em;
     color: var(--gold-lt);
   }
@@ -293,10 +305,10 @@ const css = `
     margin-top: 14px;
   }
   .card-overlay-btn {
-    padding: 10px 0;
+    padding: clamp(8px, 2vw, 10px) 0;
     border: none;
     font-family: 'Jost', sans-serif;
-    font-size: 11px;
+    font-size: clamp(10px, 2vw, 11px);
     font-weight: 500;
     letter-spacing: 0.25em;
     text-transform: uppercase;
@@ -324,20 +336,21 @@ const css = `
     transition: background 0.2s;
   }
   .card-overlay-btn:hover { background: var(--gold-lt); }
-  .card-info { padding: 14px 0 0; }
+  .card-info { padding: clamp(10px, 2vw, 14px) 0 0; }
   .card-name {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
+    font-size: clamp(14px, 2.5vw, 16px);
     font-weight: 400;
     color: var(--espresso);
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
   }
-  .card-meta { display: flex; justify-content: space-between; align-items: center; }
-  .card-category { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mink); }
-  .card-price { font-size: 13px; font-weight: 500; color: var(--umber); }
+  .card-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .card-category { font-size: clamp(10px, 2vw, 11px); letter-spacing: 0.15em; text-transform: uppercase; color: var(--mink); }
+  .card-price { font-size: clamp(12px, 2.5vw, 13px); font-weight: 500; color: var(--umber); }
   .card-fav {
     position: absolute;
     top: 14px;

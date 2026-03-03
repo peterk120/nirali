@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // Razorpay Webhook Handler for Local Development
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';

@@ -301,13 +301,13 @@ export default function NewArrivalsGrid() {
   return (
     <section
       className="py-24 px-12 bg-brand-ivory"
-      style={{ padding: '120px 60px', background: '#FAF7F0' }}
+      style={{ padding: '60px 20px', background: '#FAF7F0' }}
     >
-      <div className="flex justify-between items-end mb-16">
+      <div className="flex justify-between items-end mb-16" style={{ flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div className="relative mb-4">
             <div
-              className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-8 h-px bg-brand-gold"
+              className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-8 h-px bg-brand-gold hidden sm:block"
               style={{
                 position: 'absolute',
                 left: '-32px',
@@ -322,7 +322,7 @@ export default function NewArrivalsGrid() {
               className={`${dmSans.className} text-xs font-medium tracking-[0.3em] uppercase`}
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: '0.65rem',
+                fontSize: 'clamp(0.55rem, 2vw, 0.65rem)',
                 fontWeight: 500,
                 letterSpacing: '0.3em',
                 color: '#C9922A'
@@ -335,9 +335,10 @@ export default function NewArrivalsGrid() {
             className={`${playfairDisplay.className} text-4xl`}
             style={{
               fontFamily: 'var(--font-heading)',
-              fontSize: 'clamp(2.2rem, 3.5vw, 3.5rem)',
+              fontSize: 'clamp(1.75rem, 4vw, 2.2rem)',
               fontWeight: 400,
-              color: '#1A1A2E'
+              color: '#1A1A2E',
+              lineHeight: 1.2
             }}
           >
             New <em
@@ -358,13 +359,14 @@ export default function NewArrivalsGrid() {
           className={`${dmSans.className} text-sm font-normal tracking-[0.15em] uppercase pb-0.5 border-b`}
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: '0.7rem',
+            fontSize: 'clamp(0.65rem, 2vw, 0.7rem)',
             fontWeight: 400,
             letterSpacing: '0.15em',
             color: '#C9922A',
             borderBottom: '1px solid #C9922A',
             transition: 'all 0.3s ease',
-            textDecoration: 'none'
+            textDecoration: 'none',
+            whiteSpace: 'nowrap'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = '#A83860';
@@ -381,20 +383,23 @@ export default function NewArrivalsGrid() {
 
       {loading ? (
         <div className="text-center py-12">
-          <p className={`${dmSans.className} text-gray-500`}>
+          <p className={`${dmSans.className} text-gray-500`} style={{ fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
             Loading new arrivals...
           </p>
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-12">
-          <p className={`${dmSans.className} text-gray-500`}>
+          <p className={`${dmSans.className} text-gray-500`} style={{ fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
             No new arrivals available at the moment.
           </p>
         </div>
       ) : (
         <div
           className="grid grid-cols-4 gap-6"
-          style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}
+          style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+            gap: 'clamp(16px, 3vw, 24px)'
+          }}
         >
           {products.map((product, index) => (
             <div
@@ -402,7 +407,8 @@ export default function NewArrivalsGrid() {
               className="cursor-pointer transition-all duration-400"
               style={{
                 boxShadow: '0 0 0 rgba(192,67,106,0.12)',
-                transition: 'box-shadow 0.4s ease'
+                transition: 'box-shadow 0.4s ease',
+                maxWidth: '100%'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = '0 20px 60px rgba(192,67,106,0.12)';
@@ -428,7 +434,7 @@ export default function NewArrivalsGrid() {
                   aspectRatio: '3/4',
                   position: 'relative',
                   overflow: 'hidden',
-                  marginBottom: '20px',
+                  marginBottom: 'clamp(12px, 2vw, 20px)',
                   background: '#F5F0E4',
                   border: '1px solid #FBF1D5'
                 }}
@@ -602,10 +608,11 @@ export default function NewArrivalsGrid() {
                   className={`${playfairDisplay.className} mb-1.5 feat-name`}
                   style={{
                     fontFamily: 'var(--font-heading)',
-                    fontSize: '1rem',
+                    fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
                     fontWeight: 400,
                     color: '#1A1A2E',
-                    marginBottom: '6px'
+                    marginBottom: 'clamp(4px, 1vw, 6px)',
+                    lineHeight: 1.3
                   }}
                 >
                   {product.name}
@@ -615,21 +622,21 @@ export default function NewArrivalsGrid() {
                   className={`${dmSans.className} mb-3 feat-designer`}
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: '0.72rem',
+                    fontSize: 'clamp(0.65rem, 2vw, 0.72rem)',
                     fontWeight: 300,
                     color: '#C9922A',
-                    marginBottom: '12px'
+                    marginBottom: 'clamp(8px, 1.5vw, 12px)'
                   }}
                 >
                   {(product as any).designer || product.category || 'Designer'}
                 </p>
 
-                <div className="flex items-baseline gap-3 feat-price-row">
+                <div className="flex items-baseline gap-3 feat-price-row" style={{ flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 12px)' }}>
                   <span
                     className={`${playfairDisplay.className} feat-price-amount`}
                     style={{
                       fontFamily: 'var(--font-heading)',
-                      fontSize: '1rem',
+                      fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
                       fontWeight: 500,
                       color: '#C0436A'
                     }}
@@ -641,7 +648,7 @@ export default function NewArrivalsGrid() {
                     className={`${dmSans.className} feat-price-note`}
                     style={{
                       fontFamily: 'var(--font-body)',
-                      fontSize: '0.65rem',
+                      fontSize: 'clamp(0.55rem, 2vw, 0.65rem)',
                       fontWeight: 300,
                       color: '#B07E22'
                     }}

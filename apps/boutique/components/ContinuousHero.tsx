@@ -66,19 +66,19 @@ export default function ContinuousHero({
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 flex items-center justify-center">
           <div className="text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto z-20">
             <div className="mb-4">
-              <span className={`${dmSans.className} font-sans text-sm md:text-base tracking-widest uppercase`} style={{ color: '#c9a96e', fontWeight: 300 }}>Elegance</span>
-              <span className="mx-2" style={{ color: '#c9a96e', fontWeight: 300 }}>•</span>
-              <span className={`${dmSans.className} font-sans text-sm md:text-base tracking-widest uppercase`} style={{ color: '#c9a96e', fontWeight: 300 }}>EST. 2024</span>
+              <span className={`${dmSans.className} font-sans text-[10px] xs:text-xs md:text-base tracking-widest uppercase`} style={{ color: '#c9a96e', fontWeight: 300 }}>Elegance</span>
+              <span className="mx-2 hidden xs:inline" style={{ color: '#c9a96e', fontWeight: 300 }}>•</span>
+              <span className={`${dmSans.className} font-sans text-[10px] xs:text-xs md:text-base tracking-widest uppercase`} style={{ color: '#c9a96e', fontWeight: 300 }}>EST. 2024</span>
             </div>
-            <h1 className={`${playfairDisplay.className} font-serif text-5xl md:text-7xl lg:text-8xl font-medium mb-6 tracking-wider`} style={{ color: '#ffffff', fontWeight: 500 }}>
+            <h1 className={`${playfairDisplay.className} font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-medium mb-4 xs:mb-6 tracking-wider`} style={{ color: '#ffffff', fontWeight: 500 }}>
               {heading}
             </h1>
-            <p className={`${dmSans.className} font-sans text-lg md:text-xl lg:text-2xl mb-12 tracking-widest uppercase`} style={{ color: 'rgba(255,255,255,0.88)', fontWeight: 300 }}>
+            <p className={`${dmSans.className} font-sans text-sm xs:text-base md:text-xl lg:text-2xl mb-8 xs:mb-12 tracking-widest uppercase px-2`} style={{ color: 'rgba(255,255,255,0.88)', fontWeight: 300 }}>
               {subtitle}
             </p>
             <a
               href={ctaHref}
-              className={`${dmSans.className} font-sans text-sm md:text-base tracking-widest uppercase text-white relative group transition-all duration-300 hover:text-[#c9a96e]`}
+              className={`${dmSans.className} font-sans text-xs xs:text-sm md:text-base tracking-widest uppercase text-white relative group transition-all duration-300 hover:text-[#c9a96e] inline-block px-6 py-3`}
               style={{ fontWeight: 300 }}
             >
               {ctaLabel}
@@ -103,6 +103,14 @@ export default function ContinuousHero({
             }
             100% {
               transform: translateZ(0) translateX(-${100 / 3}%);
+            }
+          }
+          
+          /* Mobile-specific adjustments */
+          @media (max-width: 768px) {
+            .text-center {
+              padding-left: 1rem;
+              padding-right: 1rem;
             }
           }
         `}</style>

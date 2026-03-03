@@ -57,6 +57,8 @@ export default function NewProductPage() {
       const price = Number(formData.get('price'));
       const stock = Number(formData.get('stock'));
       const description = formData.get('description') as string;
+      const brand = formData.get('brand') as string || 'boutique';
+      const storeType = formData.get('storeType') as string || 'boutique';
 
       if (!productName || !category || !price || !description) {
         toast.error('Please fill in all required fields');
@@ -73,7 +75,7 @@ export default function NewProductPage() {
       console.log('Has image:', !!selectedImage);
 
       const productFormData = new FormData();
-      const productData = { name: productName, category, price, stock, description };
+      const productData = { name: productName, category, price, stock, description, brand, storeType };
       productFormData.append('product', JSON.stringify(productData));
       if (selectedImage) {
         productFormData.append('image', selectedImage);
@@ -368,6 +370,10 @@ export default function NewProductPage() {
                   <label className="field-label" htmlFor="stock">Stock Quantity</label>
                   <input type="number" id="stock" name="stock" min="0" className="field-input" placeholder="0" />
                 </div>
+
+                {/* Hidden fields for brand and storeType - defaults to 'boutique' */}
+                <input type="hidden" id="brand" name="brand" value="boutique" />
+                <input type="hidden" id="storeType" name="storeType" value="boutique" />
 
                 <div className="field full">
                   <label className="field-label" htmlFor="description">Description <span>*</span></label>

@@ -28,11 +28,9 @@ export const uploadFile = async (
   formData.append('file', file);
   formData.append('folder', folder);
 
-  // Use absolute URL for server-side calls
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
-  
-  // Use signed upload as primary method (more reliable)
-  let response = await fetch(`${baseUrl}/api/upload-signed`, {
+  // Use relative path for API routes (works in both local and Vercel)
+  // In serverless/edge environments, Next.js handles relative paths correctly
+  let response = await fetch('/api/upload-signed', {
     method: 'POST',
     body: formData,
   });
@@ -40,7 +38,7 @@ export const uploadFile = async (
   // If signed upload fails, try unsigned upload as fallback
   if (!response.ok) {
     console.log('Signed upload failed, trying unsigned upload...');
-    response = await fetch(`${baseUrl}/api/upload`, {
+    response = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
     });
@@ -69,8 +67,8 @@ export const uploadFileSigned = async (
   formData.append('file', file);
   formData.append('folder', folder);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
-  const response = await fetch(`${baseUrl}/api/upload-signed`, {
+  // Use relative path for API routes (works in both local and Vercel)
+  const response = await fetch('/api/upload-signed', {
     method: 'POST',
     body: formData,
   });

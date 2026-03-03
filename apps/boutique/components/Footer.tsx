@@ -230,7 +230,15 @@ export default function Footer() {
           }
         }
         @media (max-width: 480px) {
-          .footer-grid { grid-template-columns: 1fr !important; }
+          .footer-grid { 
+            grid-template-columns: 1fr !important;
+            padding: 36px 20px 32px !important;
+          }
+          /* Adjust font sizes for mobile */
+          .footer-grid h3,
+          .footer-grid p {
+            font-size: clamp(12px, 2.5vw, 13px) !important;
+          }
         }
       `}</style>
     </>

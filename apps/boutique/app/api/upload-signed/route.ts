@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // Alternative Cloudinary upload implementation using signed uploads
 // This doesn't require an upload preset but uses your API secret server-side
 
