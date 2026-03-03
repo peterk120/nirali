@@ -22,15 +22,15 @@ interface DressCardProps {
 export const DressCard: React.FC<DressCardProps> = ({ dress, viewMode = 'grid' }) => {
   const router = useRouter();
   const [isWishlisted, setIsWishlisted] = useState(dress.isFavorite);
-  
+
   const handleRentNow = () => {
     router.push(`/book/dress?dressId=${dress.id}`);
   };
-  
+
   const handleDetails = () => {
     router.push(`/catalog/dresses/${dress.id}`);
   };
-  
+
   const handleWishlist = async () => {
     try {
       setIsWishlisted(!isWishlisted);
@@ -43,19 +43,19 @@ export const DressCard: React.FC<DressCardProps> = ({ dress, viewMode = 'grid' }
   };
   // Debug: Log dress data
   console.log('DressCard - Dress data:', dress);
-  
+
   return (
     <div className={`bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${viewMode === 'grid' ? 'flex flex-col h-full' : 'flex'}`}>
       <div className={`${viewMode === 'grid' ? 'relative' : 'relative w-32 flex-shrink-0'}`}>
         {dress.image ? (
-          <img 
-            src={dress.image} 
-            alt={dress.name} 
+          <img
+            src={dress.image}
+            alt={dress.name}
             className="w-full h-48 object-cover rounded-t-lg"
             onError={(e) => {
               console.error('Image load error for product:', dress.name, dress.image, e);
               // Set fallback image
-              e.currentTarget.src = 'https://res.cloudinary.com/dxkqm1ifi/image/upload/v1707123456/nirali-sai-boutique/default-product.jpg';
+              e.currentTarget.src = '/images/default-product.png';
             }}
           />
         ) : (
@@ -63,19 +63,19 @@ export const DressCard: React.FC<DressCardProps> = ({ dress, viewMode = 'grid' }
             <span className="text-gray-500">No Image</span>
           </div>
         )}
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
           className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-white rounded-full"
           aria-label={isWishlisted ? "Remove from favorites" : "Add to favorites"}
           onClick={handleWishlist}
         >
-          <Heart 
-            className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-gray-500'}`} 
+          <Heart
+            className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-gray-500'}`}
           />
         </Button>
       </div>
-      
+
       <div className={`p-4 ${viewMode === 'grid' ? 'flex-1 flex flex-col' : 'flex-1 ml-4'}`}>
         <h3 className="font-semibold text-gray-900">{dress.name}</h3>
         <p className="text-brand-rose font-bold mt-1">₹{dress.price.toLocaleString()}</p>
@@ -88,16 +88,16 @@ export const DressCard: React.FC<DressCardProps> = ({ dress, viewMode = 'grid' }
           </span>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="flex-1 bg-brand-rose hover:bg-brand-rose/90"
             onClick={handleRentNow}
           >
             Rent Now
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             className="border-brand-rose text-brand-rose hover:bg-brand-rose/10"
             onClick={handleDetails}
           >
