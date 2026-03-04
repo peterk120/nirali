@@ -99,7 +99,7 @@ export default function AboutPage() {
         <hr className="divider" />
 
         {/* ── Story ────────────────────────────────────────────────────────── */}
-        <section style={{ padding: '100px 60px', maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+        <section style={{ padding: '100px 60px', maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 60, alignItems: 'center' }}>
           <motion.div {...fade(0)}>
             <span className="label-tag">Our Journey</span>
             <h2 className="section-title">From Passion<br /><em>to Legacy</em></h2>
@@ -157,14 +157,14 @@ export default function AboutPage() {
 
         {/* ── Stats ────────────────────────────────────────────────────────── */}
         <section style={{ background: '#6B1F2A', padding: '80px 60px' }}>
-          <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0 }}>
+          <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 40 }}>
             {stats.map((s, i) => (
               <motion.div
                 key={i}
                 {...fade(i * 0.1)}
                 style={{
                   textAlign: 'center',
-                  padding: '0 40px',
+                  padding: '0 20px',
                   borderRight: i < 3 ? '1px solid rgba(240,196,204,0.2)' : 'none',
                 }}
               >
@@ -188,7 +188,7 @@ export default function AboutPage() {
               <div className="gold-bar" style={{ margin: '0 auto' }} />
             </motion.div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
               {features.map((f, i) => {
                 const Icon = f.icon;
                 return (
@@ -228,7 +228,7 @@ export default function AboutPage() {
             <div className="gold-bar" style={{ margin: '0 auto' }} />
           </motion.div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2, maxWidth: 900, margin: '0 auto' }}>
             {team.map((m, i) => (
               <motion.div
                 key={i}
@@ -260,7 +260,7 @@ export default function AboutPage() {
 
         {/* ── Values ───────────────────────────────────────────────────────── */}
         <section style={{ background: '#6B1F2A', padding: '100px 60px' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 60, alignItems: 'center' }}>
             <motion.div {...fade(0)}>
               <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 500, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#F0C4CC', marginBottom: 16 }}>
                 What Guides Us
@@ -290,7 +290,7 @@ export default function AboutPage() {
               ))}
             </motion.div>
 
-            <motion.div {...fade(0.15)} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <motion.div {...fade(0.15)} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 2 }}>
               {values.map((v, i) => {
                 const Icon = v.icon;
                 return (

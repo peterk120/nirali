@@ -24,32 +24,37 @@ export const useWishlistStore = create<WishlistStore>()(
   persist(
     (set, get) => ({
       items: [],
-      
+
       addItem: (item) => {
         const newItem = {
           ...item,
           addedAt: new Date().toISOString(),
         };
-        
+
         set((state) => ({
           items: [...state.items, newItem],
         }));
+        syncItemWithServer('add', newItem);
       },
-      
+
       removeItem: (id) => {
+        const itemToRemove = get().items.find(i => i.id === id);
         set((state) => ({
           items: state.items.filter(item => item.id !== id),
         }));
+        if (itemToRemove) {
+          syncItemWithServer('remove', itemToRemove);
+        }
       },
-      
+
       isInWishlist: (productId) => {
         return get().items.some(item => item.productId === productId);
       },
-      
+
       clearWishlist: () => {
         set({ items: [] });
       },
-      
+
       getWishlistCount: () => {
         return get().items.length;
       },
@@ -63,28 +68,28 @@ export const useWishlistStore = create<WishlistStore>()(
 
 // API sync functions
 export const syncWishlistWithServer = async () => {
-  const token = localStorage.getItem('authToken');
-  
+  const token = localStorage.getItem('token');
+
   if (!token) {
     // User not logged in, nothing to sync
     return;
   }
-  
+
   try {
-    const response = await fetch('/api/users/wishlist', {
+    const response = await fetch('/api/wishlist', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
-    
+
     if (response.ok) {
       const serverWishlist = await response.json();
-      
+
       // Merge local wishlist with server wishlist
       useWishlistStore.getState().clearWishlist();
-      
+
       serverWishlist.items.forEach((item: WishlistItem) => {
         useWishlistStore.getState().addItem(item);
       });
@@ -95,15 +100,15 @@ export const syncWishlistWithServer = async () => {
 };
 
 export const syncItemWithServer = async (action: 'add' | 'remove', item: WishlistItem) => {
-  const token = localStorage.getItem('authToken');
-  
+  const token = localStorage.getItem('token');
+
   if (!token) {
     // User not logged in, nothing to sync
     return;
   }
-  
+
   try {
-    const response = await fetch('/api/users/wishlist', {
+    const response = await fetch('/api/wishlist', {
       method: action === 'add' ? 'POST' : 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -111,7 +116,7 @@ export const syncItemWithServer = async (action: 'add' | 'remove', item: Wishlis
       },
       body: JSON.stringify({ productId: item.productId }),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to sync wishlist item with server');
     }

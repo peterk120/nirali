@@ -6,6 +6,7 @@ import { useBookingStore } from '../../../../lib/stores/bookingStore';
 import { BookingProgressBar } from '../../../../components/booking/BookingProgressBar';
 import { DressCard } from '../../../../components/catalog/DressCard';
 import fetcher from '../../../../lib/api';
+import { showAddedToCart } from '../../../../lib/toast';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const css = `
@@ -394,7 +395,33 @@ const SelectDressPage = () => {
                 <button
                   className="btn-change"
                   style={{ borderColor: 'var(--umber)', color: 'var(--umber)' }}
-                  onClick={() => router.push('/catalog/dresses')}
+                  onClick={async () => {
+                    if (selectedDress) {
+                      const token = localStorage.getItem('token');
+                      if (token) {
+                        try {
+                          await fetch('/api/cart', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                              productId: selectedDress.id,
+                              quantity: 1,
+                              rentalDays: 3,
+                              action: 'add'
+                            })
+                          });
+                          showAddedToCart(selectedDress.name);
+                        } catch (err) {
+                          console.error('Failed to add to cart:', err);
+                        }
+                      }
+                      setSelectedDress(null);
+                      router.push('/catalog/dresses');
+                    }
+                  }}
                 >
                   Add more products
                 </button>

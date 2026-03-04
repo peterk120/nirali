@@ -683,7 +683,7 @@ export default function NewArrivalsGrid() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!isLoggedIn) {
-                        alert('Please login to reserve a dress.');
+                        router.push('/login');
                         return;
                       }
                       router.push(`/book/dress?dressId=${product.id || product._id}`);

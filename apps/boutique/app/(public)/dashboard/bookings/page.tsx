@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookingCard } from '../../../../components/dashboard/BookingCard';
 import { Button } from '../../../../components/ui/button';
@@ -63,48 +63,85 @@ const statusConfig = {
   },
 };
 
+// Helper function to map order status to booking status
+function mapOrderStatusToBookingStatus(orderStatus: string): 'upcoming' | 'active' | 'completed' | 'cancelled' {
+  const today = new Date();
+  
+  // Map based on order status and dates
+  if (orderStatus === 'cancelled') return 'cancelled';
+  if (orderStatus === 'delivered') return 'active';
+  if (orderStatus === 'returned' || orderStatus === 'completed') return 'completed';
+  
+  // Default logic based on rental dates
+  const rentalStart = new Date(); // Will be set from order data
+  const rentalEnd = new Date();   // Will be set from order data
+  
+  if (rentalStart > today) return 'upcoming';
+  if (rentalEnd >= today) return 'active';
+  return 'completed';
+}
+
 const MyBookingsPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<BookingStatus>('all');
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: 'BK123456',
-      dress: { id: '1', name: 'Traditional Silk Saree', category: 'Saree', image: '/saree1.jpg' },
-      startDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-      status: 'upcoming',
-      amountPaid: 3500,
-      depositStatus: 'held'
-    },
-    {
-      id: 'BK123457',
-      dress: { id: '2', name: 'Lehenga Choli Set', category: 'Lehenga', image: '/lehenga1.jpg' },
-      startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-      status: 'active',
-      amountPaid: 5200,
-      depositStatus: 'held'
-    },
-    {
-      id: 'BK123458',
-      dress: { id: '3', name: 'Anarkali Suit', category: 'Suit', image: '/suit1.jpg' },
-      startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      status: 'completed',
-      amountPaid: 1800,
-      depositStatus: 'refunded'
-    },
-    {
-      id: 'BK123459',
-      dress: { id: '4', name: 'Embroidered Gown', category: 'Gown', image: '/gown1.jpg' },
-      startDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
-      status: 'cancelled',
-      amountPaid: 2500,
-      depositStatus: 'refunded',
-      refundAmount: 2250
-    }
-  ]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(null);
+
+  // Fetch current user and bookings on mount
+  React.useEffect(() => {
+    const initializeUserAndBookings = async () => {
+      try {
+        // Get current logged-in user from localStorage or auth context
+        const storedUser = localStorage.getItem('user');
+        
+        if (!storedUser) {
+          // User not logged in, redirect to login
+          router.push('/login');
+          return;
+        }
+        
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+        
+        // Fetch bookings for this user
+        const response = await fetch(`/api/bookings?email=${encodeURIComponent(user.email)}`, {
+          headers: {
+            'Authorization': `Bearer ${user.token || ''}`,
+          },
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Transform MongoDB documents to Booking interface
+          const transformedBookings = result.data.map((order: any) => ({
+            id: order._id,
+            dress: {
+              id: order.productId?._id || 'unknown',
+              name: order.productId?.name || 'Product',
+              category: order.productId?.category || 'Unknown',
+              image: order.productId?.image || '/default-product.jpg'
+            },
+            startDate: new Date(order.rentalStartDate),
+            endDate: new Date(order.rentalEndDate),
+            status: mapOrderStatusToBookingStatus(order.status),
+            amountPaid: order.totalAmount || 0,
+            depositStatus: order.depositStatus || 'held',
+            refundAmount: order.refundAmount
+          }));
+          
+          setBookings(transformedBookings);
+        }
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeUserAndBookings();
+  }, [router]);
 
   const filteredBookings = activeTab === 'all'
     ? bookings

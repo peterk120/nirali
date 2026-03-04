@@ -15,6 +15,7 @@ interface AuthState {
     user: UserProfile | null;
     login: (userData: UserProfile) => void;
     logout: () => void;
+    fetchSession: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -24,7 +25,31 @@ export const useAuthStore = create<AuthState>()(
             user: null,
 
             login: (userData) => set({ isLoggedIn: true, user: userData }),
-            logout: () => set({ isLoggedIn: false, user: null }),
+            logout: () => {
+                localStorage.removeItem('token');
+                set({ isLoggedIn: false, user: null });
+            },
+            fetchSession: async () => {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    set({ isLoggedIn: false, user: null });
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/auth/me', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        set({ isLoggedIn: true, user: data.data });
+                    } else {
+                        localStorage.removeItem('token');
+                        set({ isLoggedIn: false, user: null });
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch session", e);
+                }
+            }
         }),
         {
             name: 'auth-storage', // name of item in localStorage

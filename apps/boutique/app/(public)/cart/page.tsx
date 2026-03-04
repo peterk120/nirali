@@ -33,24 +33,34 @@ const CartPage = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       setIsLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setCartItems([]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetcher('/products?limit=10');
-        if (response.success && response.data) {
-          const products = response.data as any[];
-          const cartItems: CartItem[] = products.map((product: any) => ({
-            id: `cart-${product._id || product.id}`,
-            productId: product._id || product.id,
-            name: product.name,
-            category: product.category,
-            image: product.image,
-            price: product.price,
-            originalPrice: product.price,
-            quantity: 1,
-            rentalDays: 3,
-            size: product.size || 'Medium',
-            isAvailable: product.stock > 0
+        const response = await fetch('/api/cart', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const resData = await response.json();
+
+        if (resData.success && resData.data) {
+          const items: CartItem[] = resData.data.map((item: any) => ({
+            id: `cart-${item.productId._id || item.productId}`,
+            productId: item.productId._id || item.productId,
+            name: item.productId.name || 'Unknown Product',
+            category: item.productId.category || 'Dress',
+            image: item.productId.image || item.productId.images?.[0] || '',
+            price: item.productId.rentalPricePerDay || item.productId.price || 0,
+            originalPrice: item.productId.rentalPricePerDay || item.productId.price || 0,
+            quantity: item.quantity,
+            rentalDays: item.rentalDays,
+            size: item.size || 'Medium',
+            isAvailable: true
           }));
-          setCartItems(cartItems);
+          setCartItems(items);
         } else {
           setCartItems([]);
         }
@@ -64,23 +74,54 @@ const CartPage = () => {
     fetchCartItems();
   }, []);
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  const updateBackendCart = async (productId: string, quantity: number, rentalDays?: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+          rentalDays,
+          action: 'set'
+        })
+      });
+    } catch (e) { console.error('Failed to update backend cart'); }
+  };
+
+  const updateQuantity = (id: string, productId: string, newQuantity: number, currentDays: number = 3) => {
     if (newQuantity < 1) return;
     setCartItems(prev => prev.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
+    updateBackendCart(productId, newQuantity, currentDays);
   };
 
-  const updateRentalDays = (id: string, days: number) => {
+  const updateRentalDays = (id: string, productId: string, days: number, currentQuantity: number = 1) => {
     if (days < 1) return;
     setCartItems(prev => prev.map(item => item.id === id ? { ...item, rentalDays: days } : item));
+    updateBackendCart(productId, currentQuantity, days);
   };
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = async (id: string, productId: string) => {
     setCartItems(prev => prev.filter(item => item.id !== id));
+
+    // update backend
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`/api/cart?productId=${productId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
   };
 
   const moveToWishlist = (item: CartItem) => {
     addToWishlist({ id: item.id, productId: item.productId, name: item.name, image: item.image, price: item.price, category: item.category });
-    removeFromCart(item.id);
+    removeFromCart(item.id, item.productId);
     showAddedToWishlist(item.name);
   };
 
@@ -138,8 +179,8 @@ const CartPage = () => {
             <p className="empty-text">Browse our curated collection and find something you'll love to wear.</p>
             <button className="empty-btn" onClick={() => router.push('/catalog/dresses')}>
               Browse Collection
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:14,height:14}}>
-                <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 14, height: 14 }}>
+                <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -645,7 +686,7 @@ const CartPage = () => {
                           <h3 className="item-name">{item.name}</h3>
                           {item.size && <p className="item-size">Size: {item.size}</p>}
                         </div>
-                        <button className="remove-btn" onClick={() => removeFromCart(item.id)} aria-label="Remove">
+                        <button className="remove-btn" onClick={() => removeFromCart(item.id, item.productId)} aria-label="Remove">
                           <X size={13} strokeWidth={1.8} />
                         </button>
                       </div>
@@ -669,11 +710,11 @@ const CartPage = () => {
                         <div className="control-group">
                           <span className="control-label">Qty</span>
                           <div className="stepper">
-                            <button className="stepper-btn" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>
+                            <button className="stepper-btn" onClick={() => updateQuantity(item.id, item.productId, item.quantity - 1, item.rentalDays)} disabled={item.quantity <= 1}>
                               <Minus size={12} strokeWidth={2} />
                             </button>
                             <span className="stepper-val">{item.quantity}</span>
-                            <button className="stepper-btn" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                            <button className="stepper-btn" onClick={() => updateQuantity(item.id, item.productId, item.quantity + 1, item.rentalDays)}>
                               <Plus size={12} strokeWidth={2} />
                             </button>
                           </div>
@@ -683,11 +724,11 @@ const CartPage = () => {
                           <div className="control-group">
                             <span className="control-label">Days</span>
                             <div className="stepper">
-                              <button className="stepper-btn" onClick={() => updateRentalDays(item.id, (item.rentalDays || 1) - 1)} disabled={(item.rentalDays || 1) <= 1}>
+                              <button className="stepper-btn" onClick={() => updateRentalDays(item.id, item.productId, (item.rentalDays || 1) - 1, item.quantity)} disabled={(item.rentalDays || 1) <= 1}>
                                 <Minus size={12} strokeWidth={2} />
                               </button>
                               <span className="stepper-val">{item.rentalDays || 1}</span>
-                              <button className="stepper-btn" onClick={() => updateRentalDays(item.id, (item.rentalDays || 1) + 1)}>
+                              <button className="stepper-btn" onClick={() => updateRentalDays(item.id, item.productId, (item.rentalDays || 1) + 1, item.quantity)}>
                                 <Plus size={12} strokeWidth={2} />
                               </button>
                             </div>
@@ -727,9 +768,9 @@ const CartPage = () => {
               >
                 <div className="summary-header">
                   <div className="summary-header-icon">
-                    <svg viewBox="0 0 16 16" fill="none" stroke="#C0436A" strokeWidth="1.4" style={{width:13,height:13}}>
-                      <rect x="1" y="3" width="14" height="10" rx="1.5"/>
-                      <path d="M1 7h14" strokeLinecap="round"/>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="#C0436A" strokeWidth="1.4" style={{ width: 13, height: 13 }}>
+                      <rect x="1" y="3" width="14" height="10" rx="1.5" />
+                      <path d="M1 7h14" strokeLinecap="round" />
                     </svg>
                   </div>
                   <h2 className="summary-title">Order Summary</h2>
@@ -801,8 +842,8 @@ const CartPage = () => {
 
                 <div className="trust-item">
                   <div className="trust-icon">
-                    <svg viewBox="0 0 16 16" fill="none" stroke="#C0436A" strokeWidth="1.4" style={{width:13,height:13}}>
-                      <path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z" strokeLinejoin="round"/>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="#C0436A" strokeWidth="1.4" style={{ width: 13, height: 13 }}>
+                      <path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z" strokeLinejoin="round" />
                     </svg>
                   </div>
                   Curated Quality Pieces

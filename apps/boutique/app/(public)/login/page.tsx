@@ -5,59 +5,90 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { validateCredentials, signToken } from '../../../lib/auth';
 import { toast } from 'react-hot-toast';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuthStore } from '../../../lib/stores/authStore';
 
-const loginSchema = z.object({
+const authSchema = z.object({
+  name: z.string().optional(),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
+  phone: z.string().optional(),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type AuthForm = z.infer<typeof authSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const { login } = useAuthStore();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    clearErrors,
+  } = useForm<AuthForm>({
+    resolver: zodResolver(authSchema),
+    defaultValues: { name: '', email: '', password: '', phone: '' },
   });
+
+  const toggleMode = () => {
+    setIsRegistering(!isRegistering);
+    clearErrors();
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
+    const userStr = localStorage.getItem('user');
+    if (token && userStr) {
       try {
-        const u = JSON.parse(user);
+        const u = JSON.parse(userStr);
         router.push(u.role === 'admin' ? '/admin' : '/');
-      } catch (_) {}
+      } catch (_) { }
     }
   }, [router]);
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: AuthForm) => {
     try {
-      const { isValid, role } = validateCredentials(data.email, data.password);
-      if (isValid && role) {
-        const token = await signToken(data.email, role);
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify({ email: data.email, role }));
-        toast.success(role === 'admin' ? 'Welcome back, Admin!' : 'Welcome back!');
-        router.push(role === 'admin' ? '/admin' : '/');
+      if (isRegistering && !data.name) {
+        setError('name', { message: 'Name is required to register' });
+        return;
+      }
+
+      const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok && resData.success) {
+        localStorage.setItem('token', resData.data.token);
+        localStorage.setItem('user', JSON.stringify(resData.data.user));
+
+        // Update global Zustand store
+        login(resData.data.user);
+
+        if (isRegistering) {
+          toast.success('Account created successfully!');
+        } else {
+          toast.success(resData.data.user.role === 'admin' ? 'Welcome back, Admin!' : 'Welcome back!');
+        }
+
+        router.push(resData.data.user.role === 'admin' ? '/admin' : '/');
       } else {
-        setError('root', { message: 'Invalid email or password' });
-        toast.error('Invalid email or password');
+        setError('root', { message: resData.error || 'Invalid credentials' });
+        toast.error(resData.error || 'Invalid credentials');
       }
     } catch (err) {
-      setError('root', { message: 'An error occurred during login' });
-      toast.error('An error occurred during login');
+      setError('root', { message: 'An error occurred during authentication' });
+      toast.error('An error occurred during authentication');
     }
   };
 
@@ -150,7 +181,7 @@ export default function LoginPage() {
                 lineHeight: 1.1,
                 margin: 0,
               }}>
-                Sign <em style={{ fontStyle: 'italic' }}>In</em>
+                {isRegistering ? 'Create Account' : <span>Sign <em style={{ fontStyle: 'italic' }}>In</em></span>}
               </h2>
               <div style={{ width: 32, height: 1, background: '#C96E82', marginTop: 14 }} />
             </div>
@@ -172,6 +203,41 @@ export default function LoginPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Name (Only when Registering) */}
+              {isRegistering && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#A0525E', marginBottom: 8 }}>
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    {...register('name')}
+                    placeholder="Jane Doe"
+                    style={{
+                      width: '100%',
+                      padding: '12px 0',
+                      border: 'none',
+                      borderBottom: `1px solid ${errors.name ? '#C96E82' : '#F0C4CC'}`,
+                      background: 'transparent',
+                      fontFamily: "'Jost', sans-serif",
+                      fontSize: 14,
+                      color: '#6B1F2A',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={e => (e.target.style.borderBottomColor = '#6B1F2A')}
+                    onBlur={e => (e.target.style.borderBottomColor = errors.name ? '#C96E82' : '#F0C4CC')}
+                  />
+                  {errors.name && (
+                    <p style={{ fontSize: 11, color: '#C96E82', marginTop: 6, letterSpacing: '0.05em' }}>
+                      {errors.name.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Email */}
               <div>
@@ -248,6 +314,41 @@ export default function LoginPage() {
                 )}
               </div>
 
+              {/* Phone (Only when Registering) */}
+              {isRegistering && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#A0525E', marginBottom: 8 }}>
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    {...register('phone')}
+                    placeholder="+91 9876543210"
+                    style={{
+                      width: '100%',
+                      padding: '12px 0',
+                      border: 'none',
+                      borderBottom: `1px solid ${errors.phone ? '#C96E82' : '#F0C4CC'}`,
+                      background: 'transparent',
+                      fontFamily: "'Jost', sans-serif",
+                      fontSize: 14,
+                      color: '#6B1F2A',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={e => (e.target.style.borderBottomColor = '#6B1F2A')}
+                    onBlur={e => (e.target.style.borderBottomColor = errors.phone ? '#C96E82' : '#F0C4CC')}
+                  />
+                  {errors.phone && (
+                    <p style={{ fontSize: 11, color: '#C96E82', marginTop: 6, letterSpacing: '0.05em' }}>
+                      {errors.phone.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Submit */}
               <div style={{ marginTop: 12 }}>
                 <button
@@ -270,8 +371,22 @@ export default function LoginPage() {
                   onMouseEnter={e => { if (!isSubmitting) (e.target as HTMLElement).style.background = '#A0525E'; }}
                   onMouseLeave={e => { if (!isSubmitting) (e.target as HTMLElement).style.background = '#6B1F2A'; }}
                 >
-                  {isSubmitting ? 'Signing In…' : 'Sign In'}
+                  {isSubmitting ? (isRegistering ? 'Creating Account…' : 'Signing In…') : (isRegistering ? 'Create Account' : 'Sign In')}
                 </button>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: 16 }}>
+                <p style={{ fontSize: 12, color: '#A0525E', fontFamily: "'Jost', sans-serif" }}>
+                  {isRegistering ? 'Already have an account?' : "Don't have an account?"}
+                  {' '}
+                  <button
+                    type="button"
+                    onClick={toggleMode}
+                    style={{ background: 'none', border: 'none', padding: 0, color: '#6B1F2A', textDecoration: 'underline', cursor: 'pointer', fontWeight: 500, fontFamily: "'Jost', sans-serif" }}
+                  >
+                    {isRegistering ? 'Sign In' : 'Create Account'}
+                  </button>
+                </p>
               </div>
 
               {/* Hint */}

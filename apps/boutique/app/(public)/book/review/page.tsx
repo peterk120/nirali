@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBookingStore } from '../../../../lib/stores/bookingStore';
 import { BookingProgressBar } from '../../../../components/booking/BookingProgressBar';
@@ -291,7 +291,11 @@ const ReviewPage = () => {
     setUserProfile,
     setTermsAccepted,
   } = useBookingStore();
-  const { isLoggedIn, user, login } = useAuthStore();
+  const { isLoggedIn, user, login, fetchSession } = useAuthStore();
+
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
 
   const [loginMethod, setLoginMethod] = useState<'google' | 'otp' | null>(null);
 
