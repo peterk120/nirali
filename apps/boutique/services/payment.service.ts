@@ -24,8 +24,12 @@ class PaymentService {
   private readonly keySecret: string;
 
   constructor() {
-    this.keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_SKM0b29EDWHcE1';
-    this.keySecret = process.env.RAZORPAY_KEY_SECRET || 'wf4e1svXGuX2r7TEPoA1ALd1';
+    this.keyId = process.env.RAZORPAY_KEY_ID!;
+    this.keySecret = process.env.RAZORPAY_KEY_SECRET!;
+
+    if (!this.keyId || !this.keySecret) {
+      console.warn('CRITICAL: Razorpay keys are not configured in environment variables.');
+    }
   }
 
   /**
@@ -33,7 +37,7 @@ class PaymentService {
    */
   async createOrder(params: CreateOrderParams) {
     const { amount, currency, receipt, notes } = params;
-    
+
     const orderData = {
       amount: Math.round(amount * 100), // Convert to paise
       currency,
@@ -69,10 +73,10 @@ class PaymentService {
    */
   verifyPayment(params: VerifyPaymentParams): boolean {
     const { orderId, paymentId, signature } = params;
-    
+
     // Create the string to be verified
     const payload = `${orderId}|${paymentId}`;
-    
+
     // Create HMAC-SHA256 hash
     const expectedSignature = crypto
       .createHmac('sha256', this.keySecret)

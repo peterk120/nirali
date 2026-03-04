@@ -82,10 +82,6 @@ const PaymentPage = () => {
   }, [showSuccessModal, countdown]);
 
   const handleRazorpayPayment = async () => {
-    // TEMPORARY: Skip actual Razorpay payment for testing
-    // Uncomment the code below when ready to use real payment integration
-
-    /*
     setIsProcessing(true);
     setIsLoadingRazorpay(true);
 
@@ -100,10 +96,8 @@ const PaymentPage = () => {
           currency: 'INR',
           receipt: `ORDER_${Date.now()}`,
           notes: {
-            bookingId: selectedDress?.id,
-            userId: userProfile?.email || 'guest',
-            advanceAmount: advanceAmount.toString(),
-            depositAmount: depositAmount.toString()
+            bookingCount: itemsToBook.length.toString(),
+            userEmail: userProfile?.email || 'guest',
           }
         })
       });
@@ -113,125 +107,79 @@ const PaymentPage = () => {
       const { order } = await response.json();
 
       const options = {
-        key: 'rzp_test_SKM0b29EDWHcE1',
+        key: 'rzp_test_SKM0b29EDWHcE1', // Should ideally be process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
         amount: order.amount,
         currency: order.currency,
         name: 'Nirali Boutique',
-        description: 'Dress Rental Booking Payment',
+        description: `Booking ${itemsToBook.length} item(s)`,
         order_id: order.id,
-        handler: async (response: any) => {
-          console.log('Payment successful, response:', response);
-    */
+        handler: async (paymentRes: any) => {
+          console.log('Payment successful, verifying...', paymentRes);
 
-    // === TEMPORARY FLOW: Simulate immediate payment success ===
-    setIsProcessing(true);
-
-    setTimeout(async () => {
-      try {
-        setAdvancePaid(advanceAmount);
-        setDepositPaid(depositAmount);
-
-        const newBookingId = `BK${Math.floor(100000 + Math.random() * 900000)}`;
-        setBookingId(newBookingId);
-
-        // Get logged-in user from localStorage
-        const storedUser = localStorage.getItem('user');
-        const userEmail = storedUser ? JSON.parse(storedUser).email : userProfile?.email || 'customer@example.com';
-
-        try {
-          const ordersToCreate = itemsToBook.map((item, idx) => ({
-            userId: storedUser ? JSON.parse(storedUser).id : (userProfile as any)?.id || 'user-123',
-            productId: item.id || item.productId,
-            productName: item.name,
-            productImage: item.images?.[0] || item.image || '/placeholder-product.jpg',
-            rentalStartDate: selectedDate,
-            rentalEndDate: returnDate,
-            rentalDays: rentalDuration || 3,
-            rentalPricePerDay: item.rentalPricePerDay || item.price || 1000,
-            depositAmount: item.depositAmount || ((item.rentalPricePerDay || item.price || 0) * 0.5),
-            totalAmount: (item.rentalPricePerDay || item.price || 1000) * (item.quantity || 1),
-            status: 'confirmed',
-            paymentStatus: 'paid',
-            customerName: userProfile?.name || 'Customer',
-            customerEmail: userEmail,
-            customerPhone: userProfile?.phone || '9999999999',
-            deliveryAddress: userProfile?.address || 'Default Address',
-            specialRequests: (idx === 0 ? specialInstructions : '') || '',
-          }));
-
-          console.log(`Creating ${ordersToCreate.length} orders...`);
-
-          if (ordersToCreate.length === 0) {
-            throw new Error('No items to book');
-          }
-
-          const orderPromises = ordersToCreate.map(orderData =>
-            fetch('/api/orders', {
+          try {
+            // Call the consolidated checkout API
+            const checkoutRes = await fetch('/api/checkout', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(orderData),
-            }).then(r => r.json())
-          );
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              },
+              body: JSON.stringify({
+                items: itemsToBook,
+                customerDetails: {
+                  name: userProfile?.name,
+                  email: userProfile?.email,
+                  phone: userProfile?.phone,
+                  address: userProfile?.address
+                },
+                paymentDetails: {
+                  razorpayOrderId: paymentRes.razorpay_order_id,
+                  razorpayPaymentId: paymentRes.razorpay_payment_id,
+                  razorpaySignature: paymentRes.razorpay_signature
+                },
+                bookingPeriod: {
+                  startDate: selectedDate,
+                  endDate: returnDate,
+                  days: rentalDuration
+                },
+                globalSpecialInstructions: specialInstructions
+              })
+            });
 
-          const results = await Promise.all(orderPromises);
-          const allSuccessful = results.length > 0 && results.every(res => res.success);
+            const checkoutResult = await checkoutRes.json();
 
-          if (allSuccessful) {
-            console.log('All orders saved successfully');
-            if (results[0]?.data?.orderId) {
-              localStorage.setItem('lastOrderId', results[0].data.orderId);
-            }
+            if (checkoutResult.success) {
+              setAdvancePaid(advanceAmount);
+              setDepositPaid(depositAmount);
+              setBookingId(checkoutResult.orders[0] || 'Confirmed');
+              setPaymentCompleted(true);
 
-            // Clear Cart if this was a cart checkout
-            if (bookingItems.length > 0) {
-              const token = localStorage.getItem('token');
-              if (token) {
-                await fetch('/api/cart', {
-                  method: 'DELETE',
-                  headers: { 'Authorization': `Bearer ${token}` }
-                });
-              }
-              // Immediately update global cart state
+              // Update global store counts
               const { useCartStore } = await import('../../../../lib/stores/cartStore');
               useCartStore.getState().fetchCart();
-            }
+              const { useAuthStore } = await import('../../../../lib/stores/authStore');
+              useAuthStore.getState().fetchBookingsCount();
 
-            // Immediately update bookings count in Navbar
-            const { useAuthStore } = await import('../../../../lib/stores/authStore');
-            useAuthStore.getState().fetchBookingsCount();
-
-            setPaymentCompleted(true);
-
-            // Show success modal after 2 seconds
-            setTimeout(() => {
               setShowSuccessModal(true);
-
-              // Redirect to My Bookings after 8 more seconds
               setTimeout(() => {
                 router.push('/dashboard/bookings');
               }, 8000);
-            }, 2000);
+            } else {
+              throw new Error(checkoutResult.error || 'Checkout failed');
+            }
+          } catch (err: any) {
+            console.error('Final checkout error:', err);
+            alert('Payment was successful but we encountered an error setting up your booking. Please contact support immediately.');
+          } finally {
+            setIsProcessing(false);
           }
-        } catch (orderError) {
-          console.error('Error saving order:', orderError);
-          alert('Payment successful but failed to save booking. Please contact support.');
-        }
-      } catch (error) {
-        console.error('Error in payment handler:', error);
-        setIsProcessing(false);
-      } finally {
-        setIsProcessing(false);
-      }
-    }, 500); // Small delay to simulate processing
-
-    /*
         },
         prefill: {
           name: userProfile?.name || '',
           email: userProfile?.email || '',
           contact: userProfile?.phone || '',
         },
-        theme: { color: '#C0436A' },
+        theme: { color: '#6B1F2A' },
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
@@ -248,7 +196,6 @@ const PaymentPage = () => {
       setIsProcessing(false);
       setIsLoadingRazorpay(false);
     }
-    */
   };
 
   const handleBack = () => {

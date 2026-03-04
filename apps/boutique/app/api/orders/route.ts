@@ -53,6 +53,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+    const { verifyToken } = await import('../../../lib/auth');
+    const payload = await verifyToken(token);
+    if (!payload) return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+
     await connectToDatabase();
     console.log('Connected to database');
 

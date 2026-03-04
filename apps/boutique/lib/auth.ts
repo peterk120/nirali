@@ -10,17 +10,18 @@ export interface UserJwtPayload {
   iat: number;
   exp: number;
   email: string;
+  id: string; // Added id
   role: 'user' | 'admin';
 }
 
-export async function signToken(email: string, role: 'user' | 'admin'): Promise<string> {
-  const token = await new SignJWT({ email, role })
+export async function signToken(email: string, role: 'user' | 'admin', id: string): Promise<string> {
+  const token = await new SignJWT({ email, role, id })
     .setProtectedHeader({ alg: 'HS256' })
     .setJti(Math.random().toString(36).substr(2, 9))
     .setIssuedAt()
     .setExpirationTime('7d')
     .sign(SECRET_KEY);
-  
+
   return token;
 }
 
@@ -38,10 +39,10 @@ export function validateCredentials(email: string, password: string): { isValid:
   if (email === 'test@gmail.com' && password === '123') {
     return { isValid: true, role: 'user' };
   }
-  
+
   if (email === 'admin@gmail.com' && password === '123') {
     return { isValid: true, role: 'admin' };
   }
-  
+
   return { isValid: false, role: null };
 }
