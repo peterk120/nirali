@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Heart, Calendar, User, Menu, X, ChevronDown, Phone, LogOut, ShoppingBag } from 'lucide-react';
+import { useWishlistStore } from '../lib/stores/wishlistStore';
+import { useCartStore } from '../lib/stores/cartStore';
+import { useAuthStore } from '../lib/stores/authStore';
 
 // ─── Brand Tokens (rose palette) ─────────────────────────────────────────────
 // Primary:   #6B1F2A  (brand-rose deep)
@@ -76,6 +79,10 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const [bookingsCount, setBookingsCount] = useState(0);
+
+  const { items: wishlistItems } = useWishlistStore();
+  const { items: cartItems, fetchCart } = useCartStore();
 
   const pathname = usePathname();
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -96,6 +103,30 @@ export default function Navbar() {
       setUserRole(u.role);
     }
   }, []);
+
+  // Fetch cart and bookings count when logged in
+  useEffect(() => {
+    if (isLoggedIn && user?.email) {
+      fetchCart();
+
+      const fetchBookingsCount = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`/api/bookings?email=${user.email}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setBookingsCount(data.count || 0);
+          }
+        } catch (e) {
+          console.error('Failed to fetch bookings count', e);
+        }
+      };
+
+      fetchBookingsCount();
+    }
+  }, [isLoggedIn, user?.email]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -381,13 +412,13 @@ export default function Navbar() {
             </AnimatePresence>
 
             {/* Wishlist */}
-            <NavIcon href="/wishlist" icon={<Heart size={18} />} badge={3} />
+            <NavIcon href="/wishlist" icon={<Heart size={18} />} badge={wishlistItems.length} />
 
             {/* Bookings */}
-            <NavIcon href="/dashboard/bookings" icon={<Calendar size={18} />} badge={2} badgeColor="#C96E82" />
+            <NavIcon href="/dashboard/bookings" icon={<Calendar size={18} />} badge={bookingsCount} badgeColor="#C96E82" />
 
             {/* Cart */}
-            <NavIcon href="/cart" icon={<ShoppingBag size={18} />} badge={3} />
+            <NavIcon href="/cart" icon={<ShoppingBag size={18} />} badge={cartItems.reduce((acc, item) => acc + item.quantity, 0)} />
 
             {/* Divider */}
             <div style={{ width: 1, height: 20, background: '#F0C4CC' }} />
@@ -682,9 +713,9 @@ export default function Navbar() {
               <div style={{ padding: '20px 24px', borderTop: '1px solid #F5E6E8', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {/* Icons row */}
                 <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
-                  <MobileIconLink href="/wishlist" icon={<Heart size={18} />} label="Wishlist" badge={3} />
-                  <MobileIconLink href="/dashboard/bookings" icon={<Calendar size={18} />} label="Bookings" badge={2} />
-                  <MobileIconLink href="/cart" icon={<ShoppingBag size={18} />} label="Cart" badge={3} />
+                  <MobileIconLink href="/wishlist" icon={<Heart size={18} />} label="Wishlist" badge={wishlistItems.length} />
+                  <MobileIconLink href="/dashboard/bookings" icon={<Calendar size={18} />} label="Bookings" badge={bookingsCount} />
+                  <MobileIconLink href="/cart" icon={<ShoppingBag size={18} />} label="Cart" badge={cartItems.reduce((acc, item) => acc + item.quantity, 0)} />
                 </div>
 
                 {/* Language */}

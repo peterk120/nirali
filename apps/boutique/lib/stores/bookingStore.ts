@@ -41,10 +41,12 @@ interface BookingState {
   depositPaid: number;
   termsAccepted: boolean;
   bookingId: string | null;
-  
+  bookingItems: any[]; // Support for multiple items from cart
+
   // Actions
   setStep: (step: number) => void;
   setSelectedDress: (dress: Dress) => void;
+  setBookingItems: (items: any[]) => void;
   setSelectedDate: (date: Date) => void;
   setReturnDate: (date: Date) => void;
   setRentalDuration: (duration: number) => void;
@@ -77,6 +79,7 @@ export const useBookingStore = create<BookingState>()(
       depositPaid: 0,
       termsAccepted: false,
       bookingId: null,
+      bookingItems: [],
 
       setStep: (step) => set({ step }),
       setSelectedDress: (dress) => set({ selectedDress: dress }),
@@ -92,6 +95,7 @@ export const useBookingStore = create<BookingState>()(
       setDepositPaid: (amount) => set({ depositPaid: amount }),
       setTermsAccepted: (accepted) => set({ termsAccepted: accepted }),
       setBookingId: (id) => set({ bookingId: id }),
+      setBookingItems: (items) => set({ bookingItems: items }),
       resetBooking: () => set({
         step: 1,
         selectedDress: null,
@@ -107,11 +111,12 @@ export const useBookingStore = create<BookingState>()(
         depositPaid: 0,
         termsAccepted: false,
         bookingId: null,
+        bookingItems: [],
       })
     }),
     {
       name: 'booking-storage', // unique name
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         step: state.step,
         selectedDress: state.selectedDress,
         selectedDate: state.selectedDate,
@@ -125,7 +130,8 @@ export const useBookingStore = create<BookingState>()(
         advancePaid: state.advancePaid,
         depositPaid: state.depositPaid,
         termsAccepted: state.termsAccepted,
-        bookingId: state.bookingId
+        bookingId: state.bookingId,
+        bookingItems: state.bookingItems
       }), // only persist booking state
       onRehydrateStorage: () => (state) => {
         // Convert string dates back to Date objects after rehydration

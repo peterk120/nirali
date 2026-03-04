@@ -612,7 +612,12 @@ export default function NewArrivalsGrid() {
                     fontWeight: 400,
                     color: '#1A1A2E',
                     marginBottom: 'clamp(4px, 1vw, 6px)',
-                    lineHeight: 1.3
+                    lineHeight: 1.3,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    height: '2.6em', // Approx 2 lines
                   }}
                 >
                   {product.name}
@@ -625,7 +630,12 @@ export default function NewArrivalsGrid() {
                     fontSize: 'clamp(0.65rem, 2vw, 0.72rem)',
                     fontWeight: 300,
                     color: '#C9922A',
-                    marginBottom: 'clamp(8px, 1.5vw, 12px)'
+                    marginBottom: 'clamp(8px, 1.5vw, 12px)',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 1,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    height: '1.2em'
                   }}
                 >
                   {(product as any).designer || product.category || 'Designer'}

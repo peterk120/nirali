@@ -287,6 +287,7 @@ const ReviewPage = () => {
     selectedJewellery,
     userProfile,
     termsAccepted,
+    bookingItems, // Support multiple items
     setStep,
     setUserProfile,
     setTermsAccepted,
@@ -306,22 +307,35 @@ const ReviewPage = () => {
     { id: 'j4', name: 'Maang Tikka', price: 700 },
   ];
 
-  const totalPrice = selectedDress
-    ? selectedDress.rentalPricePerDay +
+  // Calculate total price based on all booking items or the single selected dress
+  const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
+
+  const itemsTotal = itemsToBook.reduce((total, item) => {
+    // Note: cart items might have slightly different names (price vs rentalPricePerDay)
+    const price = item.rentalPricePerDay || item.price || 0;
+    const qty = item.quantity || 1;
+    // We ignore rentalDays from cart here because the user selects the period again in Step 2
+    return total + (price * qty);
+  }, 0);
+
+  const totalPrice = itemsTotal +
     (customMeasurements ? 500 : 0) +
     selectedJewellery.reduce((total, id) => {
       const j = jewelleryOptions.find(j => j.id === id);
       return total + (j ? j.price : 0);
-    }, 0)
-    : 0;
+    }, 0);
 
-  const depositAmount = selectedDress ? selectedDress.depositAmount : 0;
+  const depositAmount = itemsToBook.reduce((total, item) => {
+    const dep = item.depositAmount || ((item.rentalPricePerDay || item.price || 0) * 0.5);
+    return total + (dep * (item.quantity || 1));
+  }, 0);
+
   const advanceAmount = Math.round(totalPrice * 0.3);
   const jewelleryTotal = selectedJewellery.reduce((total, id) => {
     const j = jewelleryOptions.find(j => j.id === id);
     return total + (j ? j.price : 0);
   }, 0);
-  const dressRental = totalPrice - jewelleryTotal;
+  const dressRental = itemsTotal;
 
   const handleLogin = (method: 'google' | 'otp') => {
     setLoginMethod(method);
@@ -378,37 +392,42 @@ const ReviewPage = () => {
           {/* ── Left: booking summary ── */}
           <div>
 
-            {/* Dress */}
+            {/* Dresses */}
             <div className="r-card">
-              <div className="r-heading">Dress Details</div>
-              {selectedDress && (
-                <div className="dress-row">
-                  {selectedDress.images?.[0] ? (
-                    <img src={selectedDress.images[0]} alt={selectedDress.name} className="dress-thumb" />
-                  ) : (
-                    <div className="dress-thumb-ph">👗</div>
-                  )}
-                  <div>
-                    <div className="dress-name">{selectedDress.name}</div>
-                    <div className="dress-cat">{selectedDress.category}</div>
-                    <div className="dress-price">
-                      ₹{selectedDress.rentalPricePerDay.toLocaleString()}
-                      <span>/day</span>
-                    </div>
-                    <div className="detail-pills">
-                      {selectedSize && (
-                        <span className="detail-pill"><strong>Size</strong>{selectedSize}</span>
-                      )}
-                      {customMeasurements && (
-                        <span className="detail-pill"><strong>Fitting</strong>Custom</span>
-                      )}
-                      {specialInstructions && (
-                        <span className="detail-pill"><strong>Note</strong>{specialInstructions}</span>
+              <div className="r-heading">Order Items</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {itemsToBook.map((item, idx) => (
+                  <div key={item.id || idx} className="dress-row" style={{ borderBottom: idx < itemsToBook.length - 1 ? '1px solid var(--stone)' : 'none', paddingBottom: idx < itemsToBook.length - 1 ? '20px' : '0' }}>
+                    {(item.images?.[0] || item.image) ? (
+                      <img src={item.images?.[0] || item.image} alt={item.name} className="dress-thumb" />
+                    ) : (
+                      <div className="dress-thumb-ph">👗</div>
+                    )}
+                    <div>
+                      <div className="dress-name">{item.name}</div>
+                      <div className="dress-cat">{item.category}</div>
+                      <div className="dress-price">
+                        ₹{(item.rentalPricePerDay || item.price || 0).toLocaleString()}
+                        {item.quantity && item.quantity > 1 && <span> x {item.quantity}</span>}
+                        <span>/day</span>
+                      </div>
+                      {idx === 0 && ( // Link customisation to the first item for now
+                        <div className="detail-pills">
+                          {selectedSize && (
+                            <span className="detail-pill"><strong>Size</strong>{selectedSize}</span>
+                          )}
+                          {customMeasurements && (
+                            <span className="detail-pill"><strong>Fitting</strong>Custom</span>
+                          )}
+                          {specialInstructions && (
+                            <span className="detail-pill"><strong>Note</strong>{specialInstructions}</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
 
             {/* Rental period */}
@@ -491,7 +510,7 @@ const ReviewPage = () => {
 
               <div className="payment-lines">
                 <div className="payment-row">
-                  <span>Dress Rental</span>
+                  <span>Order Items</span>
                   <span>₹{dressRental.toLocaleString()}</span>
                 </div>
                 {selectedJewelleryItems.length > 0 && (

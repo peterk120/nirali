@@ -23,6 +23,8 @@ const PaymentPage = () => {
     advancePaid,
     depositPaid,
     bookingId,
+    bookingItems,
+    rentalDuration,
     setStep,
     setAdvancePaid,
     setDepositPaid,
@@ -47,11 +49,22 @@ const PaymentPage = () => {
     return total + (jewellery ? jewellery.price : 0);
   }, 0);
 
-  const totalPrice = selectedDress
-    ? selectedDress.rentalPricePerDay + (customMeasurements ? 500 : 0) + jewelleryTotal
-    : 0;
+  // Calculate total price based on all booking items or the single selected dress
+  const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
 
-  const depositAmount = selectedDress ? selectedDress.depositAmount : 0;
+  const itemsTotal = itemsToBook.reduce((total, item) => {
+    const price = item.rentalPricePerDay || item.price || 0;
+    const qty = item.quantity || 1;
+    return total + (price * qty);
+  }, 0);
+
+  const totalPrice = itemsTotal + (customMeasurements ? 500 : 0) + jewelleryTotal;
+
+  const depositAmount = itemsToBook.reduce((total, item) => {
+    const dep = item.depositAmount || ((item.rentalPricePerDay || item.price || 0) * 0.5);
+    return total + (dep * (item.quantity || 1));
+  }, 0);
+
   const advanceAmount = Math.round(totalPrice * 0.3);
   const balanceAmount = totalPrice - advanceAmount;
   const totalPayable = advanceAmount + depositAmount;
@@ -71,7 +84,7 @@ const PaymentPage = () => {
   const handleRazorpayPayment = async () => {
     // TEMPORARY: Skip actual Razorpay payment for testing
     // Uncomment the code below when ready to use real payment integration
-    
+
     /*
     setIsProcessing(true);
     setIsLoadingRazorpay(true);
@@ -112,7 +125,7 @@ const PaymentPage = () => {
 
     // === TEMPORARY FLOW: Simulate immediate payment success ===
     setIsProcessing(true);
-    
+
     setTimeout(async () => {
       try {
         setAdvancePaid(advanceAmount);
@@ -126,37 +139,53 @@ const PaymentPage = () => {
         const userEmail = storedUser ? JSON.parse(storedUser).email : userProfile?.email || 'customer@example.com';
 
         try {
-          const orderData = {
+          const ordersToCreate = bookingItems.map((item, idx) => ({
             userId: storedUser ? JSON.parse(storedUser).id : 'user-123',
-            productId: selectedDress?.id,
-            productName: selectedDress?.name,
-            productImage: selectedDress?.images?.[0] || '/placeholder-product.jpg',
+            productId: item.id || item.productId,
+            productName: item.name,
+            productImage: item.images?.[0] || item.image || '/placeholder-product.jpg',
             rentalStartDate: selectedDate,
             rentalEndDate: returnDate,
-            rentalDays: 3,
-            rentalPricePerDay: selectedDress?.rentalPricePerDay || 1000,
-            depositAmount: selectedDress?.depositAmount || 500,
-            totalAmount: totalPrice,
+            rentalDays: rentalDuration || 3,
+            rentalPricePerDay: item.rentalPricePerDay || item.price || 1000,
+            depositAmount: item.depositAmount || ((item.rentalPricePerDay || item.price || 0) * 0.5),
+            totalAmount: (item.rentalPricePerDay || item.price || 1000) * (item.quantity || 1), // Simplification: each order is its own line item price
             status: 'confirmed',
             paymentStatus: 'paid',
             customerName: userProfile?.name || 'Customer',
             customerEmail: userEmail,
             customerPhone: userProfile?.phone || '9999999999',
             deliveryAddress: userProfile?.address || 'Default Address',
-            specialRequests: specialInstructions || '',
-          };
+            specialRequests: (idx === 0 ? specialInstructions : '') || '', // Only attach instructions to first item for now
+          }));
 
-          const orderResponse = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData),
-          });
+          console.log(`Creating ${ordersToCreate.length} orders...`);
 
-          const orderResult = await orderResponse.json();
+          const orderPromises = ordersToCreate.map(orderData =>
+            fetch('/api/orders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(orderData),
+            }).then(r => r.json())
+          );
 
-          if (orderResult.success) {
-            console.log('Order saved successfully:', orderResult.data.orderId);
-            localStorage.setItem('lastOrderId', orderResult.data.orderId);
+          const results = await Promise.all(orderPromises);
+          const allSuccessful = results.every(res => res.success);
+
+          if (allSuccessful) {
+            console.log('All orders saved successfully');
+            localStorage.setItem('lastOrderId', results[0].data.orderId);
+
+            // Clear Cart if this was a cart checkout
+            if (bookingItems.length > 0) {
+              const token = localStorage.getItem('token');
+              if (token) {
+                await fetch('/api/cart', {
+                  method: 'DELETE',
+                  headers: { 'Authorization': `Bearer ${token}` }
+                });
+              }
+            }
 
             setPaymentCompleted(true);
 
@@ -181,7 +210,7 @@ const PaymentPage = () => {
         setIsProcessing(false);
       }
     }, 500); // Small delay to simulate processing
-    
+
     /*
         },
         prefill: {
@@ -221,11 +250,11 @@ const PaymentPage = () => {
     new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
   const modalDetails = [
-    { label: 'Booking ID',    value: bookingId || '',                                                               mono: true  },
-    { label: 'Dress',         value: selectedDress?.name || 'N/A'                                                               },
+    { label: 'Booking ID', value: bookingId || '', mono: true },
+    { label: 'Dress', value: selectedDress?.name || 'N/A' },
     { label: 'Rental Period', value: `${selectedDate ? formatDate(selectedDate.toString()) : 'N/A'} – ${returnDate ? formatDate(returnDate.toString()) : 'N/A'}` },
-    { label: 'Amount Paid',   value: `₹${totalPayable.toLocaleString()}`                                                        },
-    { label: 'Status',        value: 'Confirmed',                                                                   highlight: true },
+    { label: 'Amount Paid', value: `₹${totalPayable.toLocaleString()}` },
+    { label: 'Status', value: 'Confirmed', highlight: true },
   ];
 
   return (
@@ -1047,8 +1076,8 @@ const PaymentPage = () => {
                         <div className="breakdown-row-label">Security Deposit</div>
                         <div style={{ marginTop: 6 }}>
                           <span className="badge badge-green">
-                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:10,height:10}}>
-                              <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 10, height: 10 }}>
+                              <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             100% Refundable
                           </span>
@@ -1068,7 +1097,7 @@ const PaymentPage = () => {
                 <div className="card-header">
                   <div className="card-header-icon">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
-                      <path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z" strokeLinejoin="round"/>
+                      <path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <h2 className="card-title">Order Summary</h2>
@@ -1139,9 +1168,9 @@ const PaymentPage = () => {
                         </span>
                       ) : (
                         <>
-                          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:16,height:16}}>
-                            <rect x="1" y="4" width="16" height="11" rx="2"/>
-                            <path d="M1 8h16"/>
+                          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 16, height: 16 }}>
+                            <rect x="1" y="4" width="16" height="11" rx="2" />
+                            <path d="M1 8h16" />
                           </svg>
                           Pay ₹{totalPayable.toLocaleString()}
                         </>
@@ -1150,8 +1179,8 @@ const PaymentPage = () => {
 
                     <div className="trust-badge">
                       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3">
-                        <path d="M7 1L2 3.5v4C2 10.5 4.5 13 7 13s5-2.5 5-5.5v-4L7 1z" strokeLinejoin="round"/>
-                        <path d="M5 7l1.5 1.5L9 5.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M7 1L2 3.5v4C2 10.5 4.5 13 7 13s5-2.5 5-5.5v-4L7 1z" strokeLinejoin="round" />
+                        <path d="M5 7l1.5 1.5L9 5.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       Secured by Razorpay
                     </div>

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { X, Plus, Minus, ShoppingCart, CreditCard, Truck, Shield } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { useWishlistStore } from '../../../lib/stores/wishlistStore';
+import { useBookingStore } from '../../../lib/stores/bookingStore';
+import { useCartStore } from '../../../lib/stores/cartStore';
 import { showAddedToWishlist } from '../../../lib/toast';
 import fetcher from '../../../lib/api';
 
@@ -26,57 +28,33 @@ interface CartItem {
 
 const CartPage = () => {
   const router = useRouter();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { items, isLoading, fetchCart, removeItem: removeFromStore } = useCartStore();
   const { addItem: addToWishlist, isInWishlist } = useWishlistStore();
 
   useEffect(() => {
-    const fetchCartItems = async () => {
-      setIsLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setCartItems([]);
-        setIsLoading(false);
-        return;
-      }
+    fetchCart();
+  }, [fetchCart]);
 
-      try {
-        const response = await fetch('/api/cart', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const resData = await response.json();
+  const cartItems: CartItem[] = items.map(item => ({
+    id: `cart-${item.productId}`,
+    productId: item.productId,
+    name: item.name || 'Unknown Product',
+    category: item.category || 'Dress',
+    image: item.image || '',
+    price: item.price || 0,
+    originalPrice: item.price || 0,
+    quantity: item.quantity,
+    rentalDays: item.rentalDays,
+    size: item.size || 'Medium',
+    isAvailable: true
+  }));
 
-        if (resData.success && resData.data) {
-          const items: CartItem[] = resData.data.map((item: any) => ({
-            id: `cart-${item.productId._id || item.productId}`,
-            productId: item.productId._id || item.productId,
-            name: item.productId.name || 'Unknown Product',
-            category: item.productId.category || 'Dress',
-            image: item.productId.image || item.productId.images?.[0] || '',
-            price: item.productId.rentalPricePerDay || item.productId.price || 0,
-            originalPrice: item.productId.rentalPricePerDay || item.productId.price || 0,
-            quantity: item.quantity,
-            rentalDays: item.rentalDays,
-            size: item.size || 'Medium',
-            isAvailable: true
-          }));
-          setCartItems(items);
-        } else {
-          setCartItems([]);
-        }
-      } catch (error) {
-        console.error('Error fetching cart items:', error);
-        setCartItems([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCartItems();
-  }, []);
+  const updateQuantity = async (id: string, productId: string, newQuantity: number, currentDays: number = 3) => {
+    if (newQuantity < 1) return;
 
-  const updateBackendCart = async (productId: string, quantity: number, rentalDays?: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
+
     try {
       await fetch('/api/cart', {
         method: 'POST',
@@ -86,37 +64,45 @@ const CartPage = () => {
         },
         body: JSON.stringify({
           productId,
-          quantity,
-          rentalDays,
+          quantity: newQuantity,
+          rentalDays: currentDays,
           action: 'set'
         })
       });
-    } catch (e) { console.error('Failed to update backend cart'); }
+      fetchCart(); // Refresh store to sync with navbar
+    } catch (e) {
+      console.error('Failed to update quantity', e);
+    }
   };
 
-  const updateQuantity = (id: string, productId: string, newQuantity: number, currentDays: number = 3) => {
-    if (newQuantity < 1) return;
-    setCartItems(prev => prev.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
-    updateBackendCart(productId, newQuantity, currentDays);
-  };
-
-  const updateRentalDays = (id: string, productId: string, days: number, currentQuantity: number = 1) => {
+  const updateRentalDays = async (id: string, productId: string, days: number, currentQuantity: number = 1) => {
     if (days < 1) return;
-    setCartItems(prev => prev.map(item => item.id === id ? { ...item, rentalDays: days } : item));
-    updateBackendCart(productId, currentQuantity, days);
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          productId,
+          quantity: currentQuantity,
+          rentalDays: days,
+          action: 'set'
+        })
+      });
+      fetchCart(); // Refresh store
+    } catch (e) {
+      console.error('Failed to update rental days', e);
+    }
   };
 
   const removeFromCart = async (id: string, productId: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-
-    // update backend
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch(`/api/cart?productId=${productId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-    }
+    await removeFromStore(productId);
   };
 
   const moveToWishlist = (item: CartItem) => {
@@ -134,7 +120,31 @@ const CartPage = () => {
 
   const getTotalAfterDiscount = () => getTotalPrice() - getDiscountAmount();
 
-  const handleCheckout = () => router.push('/book/dress');
+  const { setBookingItems, setSelectedDress, setStep } = useBookingStore();
+  const handleCheckout = () => {
+    if (cartItems.length > 0) {
+      // Set all items for multi-product checkout
+      setBookingItems(cartItems);
+      // Also set the first item as the main selected dress for compatibility
+      const firstItem = cartItems[0];
+      setSelectedDress({
+        id: firstItem.productId,
+        name: firstItem.name,
+        category: firstItem.category,
+        images: [firstItem.image],
+        rentalPricePerDay: firstItem.price,
+        depositAmount: firstItem.price * 0.5,
+        sizes: [firstItem.size || 'Medium'],
+        isAvailable: true,
+        rating: 4.5,
+        reviewCount: 0,
+        slug: firstItem.name.toLowerCase().replace(/ /g, '-'),
+        tags: [firstItem.category]
+      });
+      setStep(2);
+      router.push('/book/date');
+    }
+  };
 
   if (isLoading) {
     return (

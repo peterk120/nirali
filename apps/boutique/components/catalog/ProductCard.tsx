@@ -63,7 +63,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
             e.currentTarget.src = '/placeholder-product.jpg';
           }}
         />
-        
+
         {isLoading && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse" />
         )}
@@ -72,7 +72,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
         <div className="absolute top-3 left-3 bg-brand-gold text-white text-xs font-medium px-2 py-1 rounded-full">
           {product.category}
         </div>
-        
+
         {/* Wishlist heart - top right */}
         <motion.button
           className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white"
@@ -88,29 +88,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
             className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-gray-700'}`}
           />
         </motion.button>
-        
+
         {/* Availability badge - bottom right */}
-        <div className={`absolute bottom-3 right-3 text-white text-xs font-medium px-2 py-1 rounded-full ${
-          product.status === 'Active' 
-            ? 'bg-green-500' 
+        <div className={`absolute bottom-3 right-3 text-white text-xs font-medium px-2 py-1 rounded-full ${product.status === 'Active'
+            ? 'bg-green-500'
             : 'bg-gray-500'
-        }`}>
+          }`}>
           {product.status}
         </div>
       </div>
-      
+
       {/* Content below image */}
       <div className="p-4">
-        <h3 className="font-playfair text-lg font-medium truncate">{product.name}</h3>
-        
+        <h3 className="font-playfair text-lg font-medium" style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          minHeight: '2.5rem'
+        }} title={product.name}>
+          {product.name}
+        </h3>
+
         {/* Price */}
         <div className="mt-2">
           <p className="text-brand-rose font-medium">₹{product.price.toLocaleString()}</p>
           <p className="text-xs text-gray-500 mt-1">Stock: {product.stock}</p>
         </div>
-        
+
         {/* View Details button */}
-        <Button 
+        <Button
           className="w-full mt-4 bg-brand-rose hover:bg-brand-rose/90 py-2"
           onClick={handleDetails}
         >

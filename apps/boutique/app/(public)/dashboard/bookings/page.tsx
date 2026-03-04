@@ -66,16 +66,16 @@ const statusConfig = {
 // Helper function to map order status to booking status
 function mapOrderStatusToBookingStatus(orderStatus: string): 'upcoming' | 'active' | 'completed' | 'cancelled' {
   const today = new Date();
-  
+
   // Map based on order status and dates
   if (orderStatus === 'cancelled') return 'cancelled';
   if (orderStatus === 'delivered') return 'active';
   if (orderStatus === 'returned' || orderStatus === 'completed') return 'completed';
-  
+
   // Default logic based on rental dates
   const rentalStart = new Date(); // Will be set from order data
   const rentalEnd = new Date();   // Will be set from order data
-  
+
   if (rentalStart > today) return 'upcoming';
   if (rentalEnd >= today) return 'active';
   return 'completed';
@@ -94,25 +94,25 @@ const MyBookingsPage = () => {
       try {
         // Get current logged-in user from localStorage or auth context
         const storedUser = localStorage.getItem('user');
-        
+
         if (!storedUser) {
           // User not logged in, redirect to login
           router.push('/login');
           return;
         }
-        
+
         const user = JSON.parse(storedUser);
         setCurrentUser(user);
-        
+
         // Fetch bookings for this user
         const response = await fetch(`/api/bookings?email=${encodeURIComponent(user.email)}`, {
           headers: {
             'Authorization': `Bearer ${user.token || ''}`,
           },
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
           // Transform MongoDB documents to Booking interface
           const transformedBookings = result.data.map((order: any) => ({
@@ -130,7 +130,7 @@ const MyBookingsPage = () => {
             depositStatus: order.depositStatus || 'held',
             refundAmount: order.refundAmount
           }));
-          
+
           setBookings(transformedBookings);
         }
       } catch (error) {
@@ -763,8 +763,8 @@ const MyBookingsPage = () => {
                 <User size={18} color="#C0436A" strokeWidth={1.4} />
               </div>
               <div>
-                <p className="profile-name">John Doe</p>
-                <span className="profile-badge">Premium Member</span>
+                <p className="profile-name">{currentUser?.name || 'Guest User'}</p>
+                <span className="profile-badge">{currentUser?.email || 'Nirali Member'}</span>
               </div>
             </div>
 
@@ -824,8 +824,8 @@ const MyBookingsPage = () => {
                   <p className="empty-desc">{emptyMessages[activeTab].desc}</p>
                   <button className="empty-btn" onClick={() => router.push('/catalog/dresses')}>
                     Browse Collection
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:13,height:13}}>
-                      <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 13, height: 13 }}>
+                      <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 </div>
@@ -885,14 +885,13 @@ const MyBookingsPage = () => {
                             </div>
                             <div className="meta-block" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                               <p className="meta-lbl">Deposit</p>
-                              <span className={`deposit-badge ${
-                                booking.depositStatus === 'held' ? 'deposit-held' :
-                                booking.depositStatus === 'refunded' ? 'deposit-refunded' :
-                                'deposit-initiated'
-                              }`}>
+                              <span className={`deposit-badge ${booking.depositStatus === 'held' ? 'deposit-held' :
+                                  booking.depositStatus === 'refunded' ? 'deposit-refunded' :
+                                    'deposit-initiated'
+                                }`}>
                                 {booking.depositStatus === 'held' ? 'Held' :
-                                 booking.depositStatus === 'refunded' ? '✓ Refunded' :
-                                 'Refund Processing'}
+                                  booking.depositStatus === 'refunded' ? '✓ Refunded' :
+                                    'Refund Processing'}
                               </span>
                             </div>
 
@@ -956,8 +955,8 @@ const MyBookingsPage = () => {
                           {/* Refund notice for cancelled */}
                           {booking.status === 'cancelled' && booking.refundAmount && (
                             <div className="refund-notice">
-                              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" style={{width:14,height:14,flexShrink:0}}>
-                                <path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z" strokeLinejoin="round"/>
+                              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" style={{ width: 14, height: 14, flexShrink: 0 }}>
+                                <path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z" strokeLinejoin="round" />
                               </svg>
                               Refund of ₹{booking.refundAmount.toLocaleString()} has been initiated to your original payment method.
                             </div>
