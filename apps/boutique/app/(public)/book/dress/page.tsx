@@ -263,17 +263,17 @@ const css = `
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const SelectDressPage = () => {
-  const router       = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const dressId      = searchParams.get('dressId');
+  const dressId = searchParams.get('dressId');
 
   // ── Untouched store connection ─────────────────────────────────────────────
   const { step, selectedDress, setSelectedDress, setStep } = useBookingStore();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading,   setIsLoading]   = useState(false);
-  const [dresses,     setDresses]     = useState<any[]>([]);
-  const [error,       setError]       = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [dresses, setDresses] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDresses = async () => {
@@ -325,11 +325,10 @@ const SelectDressPage = () => {
       const dress = dresses.find(d => d.id === dressId);
       if (dress) {
         setSelectedDress(dress);
-        setStep(2);
-        router.push('/book/date');
+        // Removed setStep(2) and router.push('/book/date') to stay on Step 1
       }
     }
-  }, [dressId, dresses, setSelectedDress, setStep, router]);
+  }, [dressId, dresses, setSelectedDress]);
 
   const handleSelectDress = (dress: any) => {
     setSelectedDress(dress);
@@ -388,9 +387,18 @@ const SelectDressPage = () => {
                   <span>/day</span>
                 </div>
               </div>
-              <button className="btn-change" onClick={() => setSelectedDress(null)}>
-                Change
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '120px' }}>
+                <button className="btn-change" onClick={() => setSelectedDress(null)}>
+                  Change
+                </button>
+                <button
+                  className="btn-change"
+                  style={{ borderColor: 'var(--umber)', color: 'var(--umber)' }}
+                  onClick={() => router.push('/catalog/dresses')}
+                >
+                  Add more products
+                </button>
+              </div>
             </div>
           )}
 

@@ -7,15 +7,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Heart, User, Menu, X, Phone } from 'lucide-react';
 import { useWishlistStore } from '../../lib/stores/wishlistStore';
 
+import { useAuthStore } from '../../lib/stores/authStore';
+
 export default function Navbar() {
   const { getWishlistCount } = useWishlistStore();
+  const { isLoggedIn, user, login, logout } = useAuthStore();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // This would come from your auth context
-  const [user, setUser] = useState(null); // This would come from your auth context
   const [activeLanguage, setActiveLanguage] = useState('en');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  
+
   const pathname = usePathname();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -97,22 +98,25 @@ export default function Navbar() {
   // Toggle auth state for demo purposes
   const toggleAuthState = () => {
     if (isLoggedIn) {
-      setIsLoggedIn(false);
-      setUser(null);
+      logout();
     } else {
-      setIsLoggedIn(true);
-      setUser({ name: 'John Doe', avatar: '/placeholder-avatar.jpg' });
+      login({
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+91 9876543210',
+        address: '123 Main Street, City, State - 123456',
+        avatar: '/placeholder-avatar.jpg'
+      });
     }
   };
 
   return (
     <>
-      <header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled 
-            ? 'bg-white shadow-md py-2 backdrop-blur-md' 
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+            ? 'bg-white shadow-md py-2 backdrop-blur-md'
             : 'bg-transparent py-4'
-        }`}
+          }`}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
@@ -129,11 +133,10 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href as any}
-                  className={`relative py-2 font-body ${
-                    pathname === link.href 
-                      ? 'text-brand-rose font-semibold' 
+                  className={`relative py-2 font-body ${pathname === link.href
+                      ? 'text-brand-rose font-semibold'
                       : 'text-gray-700 hover:text-brand-rose'
-                  }`}
+                    }`}
                 >
                   {link.name}
                   {pathname === link.href && (
@@ -153,7 +156,7 @@ export default function Navbar() {
               <button className="text-gray-700 hover:text-brand-rose transition-colors">
                 <Search className="w-5 h-5" />
               </button>
-              
+
               <div className="relative">
                 <Link href="/wishlist" className="text-gray-700 hover:text-brand-rose transition-colors">
                   <Heart className="w-5 h-5" />
@@ -172,10 +175,10 @@ export default function Navbar() {
                   )}
                 </AnimatePresence>
               </div>
-              
+
               {isLoggedIn ? (
                 <div className="relative" ref={userDropdownRef}>
-                  <button 
+                  <button
                     className="flex items-center space-x-2"
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
                   >
@@ -184,7 +187,7 @@ export default function Navbar() {
                     </div>
                     <span className="font-body text-sm">{user?.name}</span>
                   </button>
-                  
+
                   <AnimatePresence>
                     {showUserDropdown && (
                       <motion.div
@@ -193,8 +196,8 @@ export default function Navbar() {
                         exit={{ opacity: 0, y: -10 }}
                         className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
                       >
-                        <Link 
-                          href={'/my-bookings' as any} 
+                        <Link
+                          href={'/my-bookings' as any}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           My Bookings
@@ -210,7 +213,7 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
               ) : (
-                <button 
+                <button
                   onClick={toggleAuthState}
                   className="flex items-center space-x-2 text-gray-700 hover:text-brand-rose transition-colors"
                 >
@@ -218,7 +221,7 @@ export default function Navbar() {
                   <span>Login</span>
                 </button>
               )}
-              
+
               <button className="bg-brand-rose hover:bg-brand-rose/90 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">
                 Book Now
               </button>
@@ -252,7 +255,7 @@ export default function Navbar() {
               className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
-            
+
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -280,11 +283,10 @@ export default function Navbar() {
                       <li key={link.href}>
                         <Link
                           href={link.href as any}
-                          className={`block py-2 text-lg font-body ${
-                            pathname === link.href 
-                              ? 'text-brand-rose font-semibold' 
+                          className={`block py-2 text-lg font-body ${pathname === link.href
+                              ? 'text-brand-rose font-semibold'
                               : 'text-gray-700'
-                          }`}
+                            }`}
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           {link.name}
@@ -301,11 +303,10 @@ export default function Navbar() {
                       <button
                         key={lang.code}
                         onClick={() => handleLanguageChange(lang.code)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                          activeLanguage === lang.code
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeLanguage === lang.code
                             ? 'bg-brand-rose text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                          }`}
                       >
                         {lang.name}
                       </button>
@@ -317,7 +318,7 @@ export default function Navbar() {
                     <Phone className="w-5 h-5 text-green-600" />
                     <span className="font-body text-green-800">Contact us on WhatsApp</span>
                   </div>
-                  
+
                   {/* Wishlist Link */}
                   <Link href="/wishlist" className="flex items-center justify-between p-3 bg-gray-100 rounded-lg">
                     <span className="font-body">Wishlist</span>
@@ -343,8 +344,8 @@ export default function Navbar() {
                   <div className="pt-4 border-t border-gray-200">
                     {isLoggedIn ? (
                       <div className="space-y-3">
-                        <Link 
-                          href={'/my-bookings' as any} 
+                        <Link
+                          href={'/my-bookings' as any}
                           className="block w-full text-center py-2 bg-gray-100 rounded-lg font-body"
                           onClick={() => setMobileMenuOpen(false)}
                         >

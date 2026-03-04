@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBookingStore } from '../../../../lib/stores/bookingStore';
 import { BookingProgressBar } from '../../../../components/booking/BookingProgressBar';
+import { useAuthStore } from '../../../../lib/stores/authStore';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const css = `
@@ -290,28 +291,28 @@ const ReviewPage = () => {
     setUserProfile,
     setTermsAccepted,
   } = useBookingStore();
+  const { isLoggedIn, user, login } = useAuthStore();
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'google' | 'otp' | null>(null);
 
   const jewelleryOptions = [
     { id: 'j1', name: 'Traditional Necklace Set', price: 800 },
-    { id: 'j2', name: 'Diamond Stud Earrings',    price: 1200 },
-    { id: 'j3', name: 'Bangles Set',              price: 600 },
-    { id: 'j4', name: 'Maang Tikka',              price: 700 },
+    { id: 'j2', name: 'Diamond Stud Earrings', price: 1200 },
+    { id: 'j3', name: 'Bangles Set', price: 600 },
+    { id: 'j4', name: 'Maang Tikka', price: 700 },
   ];
 
   const totalPrice = selectedDress
     ? selectedDress.rentalPricePerDay +
-      (customMeasurements ? 500 : 0) +
-      selectedJewellery.reduce((total, id) => {
-        const j = jewelleryOptions.find(j => j.id === id);
-        return total + (j ? j.price : 0);
-      }, 0)
+    (customMeasurements ? 500 : 0) +
+    selectedJewellery.reduce((total, id) => {
+      const j = jewelleryOptions.find(j => j.id === id);
+      return total + (j ? j.price : 0);
+    }, 0)
     : 0;
 
-  const depositAmount  = selectedDress ? selectedDress.depositAmount : 0;
-  const advanceAmount  = Math.round(totalPrice * 0.3);
+  const depositAmount = selectedDress ? selectedDress.depositAmount : 0;
+  const advanceAmount = Math.round(totalPrice * 0.3);
   const jewelleryTotal = selectedJewellery.reduce((total, id) => {
     const j = jewelleryOptions.find(j => j.id === id);
     return total + (j ? j.price : 0);
@@ -320,13 +321,14 @@ const ReviewPage = () => {
 
   const handleLogin = (method: 'google' | 'otp') => {
     setLoginMethod(method);
-    setIsLoggedIn(true);
-    setUserProfile({
+    const mockUser = {
       name: 'John Doe',
       email: 'john@example.com',
       phone: '+91 9876543210',
       address: '123 Main Street, City, State - 123456',
-    });
+    };
+    login(mockUser);
+    setUserProfile(mockUser);
   };
 
   const handleContinue = () => {
@@ -448,10 +450,10 @@ const ReviewPage = () => {
                   <p className="login-prompt">Please sign in to complete your reservation.</p>
                   <button className="btn-google" onClick={() => handleLogin('google')}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
                     Sign in with Google
                   </button>
@@ -461,13 +463,13 @@ const ReviewPage = () => {
                   </button>
                 </>
               ) : (
-                userProfile && (
+                user && (
                   <div className="profile-grid">
                     {[
-                      { label: 'Name',    value: userProfile.name },
-                      { label: 'Email',   value: userProfile.email },
-                      { label: 'Phone',   value: userProfile.phone },
-                      { label: 'Address', value: userProfile.address },
+                      { label: 'Name', value: user.name },
+                      { label: 'Email', value: user.email },
+                      { label: 'Phone', value: user.phone },
+                      { label: 'Address', value: user.address },
                     ].map(row => (
                       <div key={row.label} className="profile-row">
                         <div className="profile-label">{row.label}</div>

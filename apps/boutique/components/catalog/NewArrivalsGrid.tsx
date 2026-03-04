@@ -5,9 +5,12 @@ import { playfairDisplay, dmSans } from '@/lib/fonts';
 import { getNewArrivals } from '@/lib/api';
 import type { Product } from '@nirali-sai/types';
 import { useRouter } from 'next/navigation';
+import { ShoppingCart, Calendar } from 'lucide-react';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 export default function NewArrivalsGrid() {
   const router = useRouter();
+  const { isLoggedIn } = useAuthStore();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -578,7 +581,7 @@ export default function NewArrivalsGrid() {
                   }}
                 ></div>
 
-                {/* Content Overlay that slides up on hover */}
+                {/* Content Overlay that slides up on hover (Removed buttons to text area) */}
                 <div
                   className="absolute bottom-0 left-0 right-0 feat-quick"
                   style={{
@@ -596,64 +599,6 @@ export default function NewArrivalsGrid() {
                     backdropFilter: 'blur(4px)',
                   }}
                 >
-                  <button
-                    className={`${dmSans.className} w-full`}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(192,67,106,1)',
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
-                      color: '#FAF7F0',
-                      padding: '10px',
-                      textTransform: 'uppercase',
-                      border: 'none',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      borderRadius: '2px',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLElement).style.background = '#A83860';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLElement).style.background = 'rgba(192,67,106,1)';
-                    }}
-                    onClick={() => {
-                      router.push(`/book/dress?dressId=${product.id || product._id}`);
-                    }}
-                  >
-                    Reserve Now
-                  </button>
-                  <button
-                    className={`${dmSans.className} w-full`}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(255,255,255,0.95)',
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
-                      color: '#1A1A2E',
-                      padding: '10px',
-                      textTransform: 'uppercase',
-                      border: '1px solid #1A1A2E',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      borderRadius: '2px',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLElement).style.background = '#F0F0F0';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.95)';
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Simple alert placeholder for Add to Cart
-                      alert(`Added ${product.name} to cart!`);
-                    }}
-                  >
-                    Add to Cart
-                  </button>
                 </div>
               </div>
 
@@ -686,7 +631,7 @@ export default function NewArrivalsGrid() {
                   {(product as any).designer || product.category || 'Designer'}
                 </p>
 
-                <div className="flex items-baseline gap-3 feat-price-row" style={{ flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 12px)' }}>
+                <div className="flex items-baseline gap-3 feat-price-row mb-4" style={{ flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 12px)' }}>
                   <span
                     className={`${playfairDisplay.className} feat-price-amount`}
                     style={{
@@ -710,6 +655,74 @@ export default function NewArrivalsGrid() {
                   >
                     /4 days
                   </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    className={`${dmSans.className} flex-1 flex items-center justify-center`}
+                    style={{
+                      background: 'rgba(192,67,106,1)',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.05em',
+                      color: '#FAF7F0',
+                      padding: '8px 12px',
+                      textTransform: 'uppercase',
+                      border: 'none',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      borderRadius: '4px',
+                      transition: 'background 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLElement).style.background = '#A83860';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.target as HTMLElement).style.background = 'rgba(192,67,106,1)';
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isLoggedIn) {
+                        alert('Please login to reserve a dress.');
+                        return;
+                      }
+                      router.push(`/book/dress?dressId=${product.id || product._id}`);
+                    }}
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Reserve
+                  </button>
+                  <button
+                    className={`${dmSans.className} flex-1 flex items-center justify-center`}
+                    style={{
+                      background: 'transparent',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.05em',
+                      color: '#C0436A',
+                      padding: '8px 12px',
+                      textTransform: 'uppercase',
+                      border: '1px solid #C0436A',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      borderRadius: '4px',
+                      transition: 'background 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLElement).style.background = 'rgba(192,67,106,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.target as HTMLElement).style.background = 'transparent';
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Simple alert placeholder for Add to Cart
+                      alert(`Added ${product.name} to cart!`);
+                    }}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Cart
+                  </button>
                 </div>
               </div>
             </div>
