@@ -72,15 +72,12 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [activeLang, setActiveLang] = useState('en');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [userRole, setUserRole] = useState<'user' | 'admin' | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-  const [bookingsCount, setBookingsCount] = useState(0);
 
+  const { isLoggedIn, user, bookingsCount, logout, fetchBookingsCount } = useAuthStore();
   const { items: wishlistItems } = useWishlistStore();
   const { items: cartItems, fetchCart } = useCartStore();
 
@@ -94,39 +91,15 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      const u = JSON.parse(stored);
-      setIsLoggedIn(true);
-      setUser(u);
-      setUserRole(u.role);
-    }
-  }, []);
-
-  // Fetch cart and bookings count when logged in
+  // Sync cart and bookings count when logged in
   useEffect(() => {
     if (isLoggedIn && user?.email) {
       fetchCart();
-
-      const fetchBookingsCount = async () => {
-        try {
-          const token = localStorage.getItem('token');
-          const res = await fetch(`/api/bookings?email=${user.email}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (data.success) {
-            setBookingsCount(data.count || 0);
-          }
-        } catch (e) {
-          console.error('Failed to fetch bookings count', e);
-        }
-      };
-
       fetchBookingsCount();
     }
-  }, [isLoggedIn, user?.email]);
+  }, [isLoggedIn, user?.email, fetchCart, fetchBookingsCount]);
+
+  // Removed local sync effect as it's now handled by the effect above or store actions directly
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -151,8 +124,8 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    setIsLoggedIn(false); setUser(null); setUserRole(null);
-    localStorage.removeItem('token'); localStorage.removeItem('user');
+    logout();
+    setShowUserMenu(false);
     window.location.href = '/';
   };
 
@@ -487,7 +460,7 @@ export default function Navbar() {
                       <div style={{ height: 2, background: 'linear-gradient(90deg, #6B1F2A, #C96E82)' }} />
                       {[
                         { label: 'My Bookings', href: '/dashboard/bookings' },
-                        ...(userRole === 'admin' ? [{ label: 'Admin Panel', href: '/admin' }] : []),
+                        ...(user?.role === 'admin' ? [{ label: 'Admin Panel', href: '/admin' }] : []),
                       ].map(item => (
                         <Link
                           key={item.href}

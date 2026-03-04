@@ -102,12 +102,19 @@ const MyBookingsPage = () => {
         }
 
         const user = JSON.parse(storedUser);
+        const token = localStorage.getItem('token');
         setCurrentUser(user);
+
+        if (!token) {
+          console.warn('No authentication token found');
+          setLoading(false);
+          return;
+        }
 
         // Fetch bookings for this user
         const response = await fetch(`/api/bookings?email=${encodeURIComponent(user.email)}`, {
           headers: {
-            'Authorization': `Bearer ${user.token || ''}`,
+            'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -886,8 +893,8 @@ const MyBookingsPage = () => {
                             <div className="meta-block" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                               <p className="meta-lbl">Deposit</p>
                               <span className={`deposit-badge ${booking.depositStatus === 'held' ? 'deposit-held' :
-                                  booking.depositStatus === 'refunded' ? 'deposit-refunded' :
-                                    'deposit-initiated'
+                                booking.depositStatus === 'refunded' ? 'deposit-refunded' :
+                                  'deposit-initiated'
                                 }`}>
                                 {booking.depositStatus === 'held' ? 'Held' :
                                   booking.depositStatus === 'refunded' ? '✓ Refunded' :

@@ -199,11 +199,11 @@ const css = `
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, name: 'Select Dress', icon: Shirt,      route: '/book/dress'     },
-  { id: 2, name: 'Select Date',  icon: Calendar,   route: '/book/date'      },
-  { id: 3, name: 'Customise',    icon: Scissors,   route: '/book/customise' },
-  { id: 4, name: 'Review',       icon: User,        route: '/book/review'   },
-  { id: 5, name: 'Payment',      icon: CreditCard, route: '/book/payment'   },
+  { id: 1, name: 'Select Dress', icon: Shirt, route: '/book/dress' },
+  { id: 2, name: 'Select Date', icon: Calendar, route: '/book/date' },
+  { id: 3, name: 'Customise', icon: Scissors, route: '/book/customise' },
+  { id: 4, name: 'Review', icon: User, route: '/book/review' },
+  { id: 5, name: 'Payment', icon: CreditCard, route: '/book/payment' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -213,20 +213,22 @@ export const BookingProgressBar = () => {
 
   // ── Untouched store connection ─────────────────────────────────────────────
   const currentStep = useBookingStore(state => state.step);
-  const setStep     = useBookingStore(state => state.setStep);
+  const selectedDress = useBookingStore(state => state.selectedDress);
+  const bookingItems = useBookingStore(state => state.bookingItems);
+  const setStep = useBookingStore(state => state.setStep);
 
-  const totalSteps  = STEPS.length;
+  const totalSteps = STEPS.length;
   const progressPct = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
   // live drag state (doesn't trigger re-renders)
-  const trackRef    = useRef<HTMLDivElement>(null);
-  const dragging    = useRef(false);
-  const wrapRef     = useRef<HTMLDivElement>(null);
-  const thumbRef    = useRef<HTMLDivElement>(null);
-  const tooltipRef  = useRef<HTMLDivElement>(null);
-  const fillRef     = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [dragStep, setDragStep]     = React.useState(currentStep);
+  const [dragStep, setDragStep] = React.useState(currentStep);
 
   // navigate to a step (only previously visited steps)
   const goToStep = (stepId: number) => {
@@ -249,8 +251,8 @@ export const BookingProgressBar = () => {
   // update visual position instantly during drag (no react re-render)
   const updateDragVisuals = (stepId: number) => {
     const pct = ((stepId - 1) / (totalSteps - 1)) * 100;
-    if (thumbRef.current)   thumbRef.current.style.left   = `calc(${pct}% - 7px)`;
-    if (fillRef.current)    fillRef.current.style.width   = `${pct}%`;
+    if (thumbRef.current) thumbRef.current.style.left = `calc(${pct}% - 7px)`;
+    if (fillRef.current) fillRef.current.style.width = `${pct}%`;
     if (tooltipRef.current) {
       tooltipRef.current.style.left = `${pct}%`;
       const name = STEPS.find(s => s.id === stepId)?.name ?? '';
@@ -287,26 +289,26 @@ export const BookingProgressBar = () => {
     e.preventDefault();
     onDragStart(e.clientX);
     const onMove = (ev: MouseEvent) => onDragMove(ev.clientX);
-    const onUp   = () => {
+    const onUp = () => {
       onDragEnd();
       window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup',   onUp);
+      window.removeEventListener('mouseup', onUp);
     };
     window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup',   onUp);
+    window.addEventListener('mouseup', onUp);
   };
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     onDragStart(e.touches[0].clientX);
     const onMove = (ev: TouchEvent) => onDragMove(ev.touches[0].clientX);
-    const onEnd  = () => {
+    const onEnd = () => {
       onDragEnd();
       window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('touchend',  onEnd);
+      window.removeEventListener('touchend', onEnd);
     };
     window.addEventListener('touchmove', onMove, { passive: true });
-    window.addEventListener('touchend',  onEnd);
+    window.addEventListener('touchend', onEnd);
   };
 
   return (
@@ -314,14 +316,40 @@ export const BookingProgressBar = () => {
       <style>{css}</style>
 
       <div className="progress-root">
+        {/* Multi-product indicator */}
+        <div style={{
+          background: 'var(--ivory)',
+          borderBottom: '1px solid var(--stone)',
+          padding: '8px 60px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '11px',
+          letterSpacing: '0.05em',
+          color: 'var(--umber)',
+          fontFamily: "'Jost', sans-serif"
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Shirt size={12} />
+            <span>Booking <strong>{bookingItems.length > 0 ? bookingItems.length : selectedDress ? 1 : 0}</strong> item(s)</span>
+          </div>
+          {(bookingItems.length > 0 || selectedDress) && (
+            <div style={{ fontSize: '10px', color: 'var(--mink)', fontStyle: 'italic' }}>
+              {bookingItems.length > 0
+                ? `${bookingItems[0].name}${bookingItems.length > 1 ? ` + ${bookingItems.length - 1} more` : ''}`
+                : selectedDress?.name}
+            </div>
+          )}
+        </div>
+
         <div className="progress-inner">
 
           {/* ── Step nodes ── */}
           <div className="steps-row">
             {STEPS.map((step, index) => {
-              const Icon        = step.icon;
+              const Icon = step.icon;
               const isCompleted = step.id < currentStep;
-              const isActive    = step.id === currentStep;
+              const isActive = step.id === currentStep;
               const isClickable = step.id <= currentStep;
 
               return (
@@ -384,8 +412,8 @@ export const BookingProgressBar = () => {
 
               {/* tick dots */}
               {STEPS.map((step, i) => {
-                const pct       = (i / (totalSteps - 1)) * 100;
-                const isDone    = step.id < currentStep;
+                const pct = (i / (totalSteps - 1)) * 100;
+                const isDone = step.id < currentStep;
                 const isCurrent = step.id === currentStep;
                 return (
                   <div

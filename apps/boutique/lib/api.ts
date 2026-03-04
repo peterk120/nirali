@@ -24,7 +24,7 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Get JWT token from wherever it's stored (cookies, localStorage, etc.)
   // In a real app, you might use a cookie library or next-auth
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',

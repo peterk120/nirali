@@ -284,6 +284,7 @@ const SelectDatePage = () => {
   const {
     step,
     selectedDress,
+    bookingItems, // Support multiple items
     selectedDate,
     returnDate,
     rentalDuration,
@@ -293,13 +294,16 @@ const SelectDatePage = () => {
     setRentalDuration,
   } = useBookingStore();
 
-  const bookedDates  = ['2026-03-15', '2026-03-16', '2026-03-20'];
+  const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
+  // ... rest of the component
+
+  const bookedDates = ['2026-03-15', '2026-03-16', '2026-03-20'];
   const limitedDates = ['2026-03-10', '2026-03-25'];
 
   const durationOptions = [
-    { days: 1, label: '1 Day',   price: 0 },
-    { days: 3, label: '3 Days',  price: 200 },
-    { days: 7, label: '7 Days',  price: 500 },
+    { days: 1, label: '1 Day', price: 0 },
+    { days: 3, label: '3 Days', price: 200 },
+    { days: 7, label: '7 Days', price: 500 },
   ];
 
   const calculateReturnDate = (startDate: Date, days: number): Date => {
@@ -353,12 +357,34 @@ const SelectDatePage = () => {
           <div>
             <p className="date-eyebrow">Step 2 of 4</p>
             <h1 className="date-title">Select <em>Rental Dates</em></h1>
-            <p className="date-subtitle">Choose when your occasion begins</p>
+            <p className="date-subtitle">
+              Choose when your occasion begins
+              {itemsToBook.length > 1 && <span style={{ color: 'var(--gold)', marginLeft: '8px' }}>— {itemsToBook.length} items selected</span>}
+            </p>
           </div>
           <button className="date-back" onClick={handleBack}>
             ← Dress Selection
           </button>
         </div>
+
+        {/* Item preview for multi-product */}
+        {itemsToBook.length > 0 && (
+          <div style={{
+            maxWidth: '780px',
+            margin: '20px auto 0',
+            padding: '0 60px',
+            display: 'flex',
+            gap: '12px',
+            overflowX: 'auto',
+            paddingBottom: '10px'
+          }}>
+            {itemsToBook.map((item, idx) => (
+              <div key={idx} style={{ flexShrink: 0, width: '40px', height: '54px', border: '1px solid var(--stone)', background: '#fff' }}>
+                <img src={item.image || item.images?.[0] || '/placeholder-product.jpg'} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── Body ── */}
         <div className="date-body">

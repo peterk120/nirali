@@ -139,8 +139,8 @@ const PaymentPage = () => {
         const userEmail = storedUser ? JSON.parse(storedUser).email : userProfile?.email || 'customer@example.com';
 
         try {
-          const ordersToCreate = bookingItems.map((item, idx) => ({
-            userId: storedUser ? JSON.parse(storedUser).id : 'user-123',
+          const ordersToCreate = itemsToBook.map((item, idx) => ({
+            userId: storedUser ? JSON.parse(storedUser).id : (userProfile as any)?.id || 'user-123',
             productId: item.id || item.productId,
             productName: item.name,
             productImage: item.images?.[0] || item.image || '/placeholder-product.jpg',
@@ -149,17 +149,21 @@ const PaymentPage = () => {
             rentalDays: rentalDuration || 3,
             rentalPricePerDay: item.rentalPricePerDay || item.price || 1000,
             depositAmount: item.depositAmount || ((item.rentalPricePerDay || item.price || 0) * 0.5),
-            totalAmount: (item.rentalPricePerDay || item.price || 1000) * (item.quantity || 1), // Simplification: each order is its own line item price
+            totalAmount: (item.rentalPricePerDay || item.price || 1000) * (item.quantity || 1),
             status: 'confirmed',
             paymentStatus: 'paid',
             customerName: userProfile?.name || 'Customer',
             customerEmail: userEmail,
             customerPhone: userProfile?.phone || '9999999999',
             deliveryAddress: userProfile?.address || 'Default Address',
-            specialRequests: (idx === 0 ? specialInstructions : '') || '', // Only attach instructions to first item for now
+            specialRequests: (idx === 0 ? specialInstructions : '') || '',
           }));
 
           console.log(`Creating ${ordersToCreate.length} orders...`);
+
+          if (ordersToCreate.length === 0) {
+            throw new Error('No items to book');
+          }
 
           const orderPromises = ordersToCreate.map(orderData =>
             fetch('/api/orders', {
@@ -170,11 +174,13 @@ const PaymentPage = () => {
           );
 
           const results = await Promise.all(orderPromises);
-          const allSuccessful = results.every(res => res.success);
+          const allSuccessful = results.length > 0 && results.every(res => res.success);
 
           if (allSuccessful) {
             console.log('All orders saved successfully');
-            localStorage.setItem('lastOrderId', results[0].data.orderId);
+            if (results[0]?.data?.orderId) {
+              localStorage.setItem('lastOrderId', results[0].data.orderId);
+            }
 
             // Clear Cart if this was a cart checkout
             if (bookingItems.length > 0) {
@@ -185,7 +191,14 @@ const PaymentPage = () => {
                   headers: { 'Authorization': `Bearer ${token}` }
                 });
               }
+              // Immediately update global cart state
+              const { useCartStore } = await import('../../../../lib/stores/cartStore');
+              useCartStore.getState().fetchCart();
             }
+
+            // Immediately update bookings count in Navbar
+            const { useAuthStore } = await import('../../../../lib/stores/authStore');
+            useAuthStore.getState().fetchBookingsCount();
 
             setPaymentCompleted(true);
 
@@ -925,7 +938,7 @@ const PaymentPage = () => {
           font-family: 'Jost', sans-serif;
           font-size: 11px; font-weight: 500;
           letter-spacing: 0.3em; text-transform: uppercase;
-          color: var(--ivory); cursor: pointer;
+          color: black; cursor: pointer;
           margin-bottom: 12px;
           transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
           box-shadow: 0 4px 16px rgba(107,31,42,0.22);
@@ -948,7 +961,7 @@ const PaymentPage = () => {
           font-family: 'Jost', sans-serif;
           font-size: 11px; font-weight: 500;
           letter-spacing: 0.3em; text-transform: uppercase;
-          color: var(--accent-rose); cursor: pointer;
+          color: black; cursor: pointer;
           margin-bottom: 24px;
           transition: background 0.2s, color 0.2s, transform 0.15s;
         }

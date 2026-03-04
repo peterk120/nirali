@@ -342,6 +342,7 @@ const CustomisePage = () => {
   const {
     step,
     selectedDress,
+    bookingItems, // Support multiple items
     selectedSize,
     customMeasurements,
     specialInstructions,
@@ -353,12 +354,14 @@ const CustomisePage = () => {
     setSelectedJewellery,
   } = useBookingStore();
 
+  const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
+
   const [isCustomFittingEnabled, setIsCustomFittingEnabled] = useState(false);
   const [jewelleryOptions] = useState([
     { id: 'j1', name: 'Traditional Necklace Set', price: 800 },
-    { id: 'j2', name: 'Diamond Stud Earrings',    price: 1200 },
-    { id: 'j3', name: 'Bangles Set',              price: 600 },
-    { id: 'j4', name: 'Maang Tikka',              price: 700 },
+    { id: 'j2', name: 'Diamond Stud Earrings', price: 1200 },
+    { id: 'j3', name: 'Bangles Set', price: 600 },
+    { id: 'j4', name: 'Maang Tikka', price: 700 },
   ]);
 
   const handleSizeChange = (size: string) => setSelectedSize(size);
@@ -381,14 +384,18 @@ const CustomisePage = () => {
     router.push('/book/date');
   };
 
-  const totalPrice = selectedDress
-    ? selectedDress.rentalPricePerDay +
-      (isCustomFittingEnabled ? 500 : 0) +
-      selectedJewellery.reduce((total, id) => {
-        const jewellery = jewelleryOptions.find(j => j.id === id);
-        return total + (jewellery ? jewellery.price : 0);
-      }, 0)
-    : 0;
+  const itemsTotal = itemsToBook.reduce((total, item) => {
+    const price = item.price || item.rentalPricePerDay || 0;
+    const qty = item.quantity || 1;
+    return total + (price * qty);
+  }, 0);
+
+  const totalPrice = itemsTotal +
+    (isCustomFittingEnabled ? 500 : 0) +
+    selectedJewellery.reduce((total, id) => {
+      const jewellery = jewelleryOptions.find(j => j.id === id);
+      return total + (jewellery ? jewellery.price : 0);
+    }, 0);
   // ── End untouched logic ────────────────────────────────────────────────────
 
   return (
@@ -415,30 +422,28 @@ const CustomisePage = () => {
 
           {/* Sidebar — dress summary */}
           <div className="cust-sidebar">
-            <div className="dress-info-card">
-              {selectedDress ? (
-                <>
-                  {selectedDress.images?.[0] ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {itemsToBook.map((item, idx) => (
+                <div key={idx} className="dress-info-card">
+                  {(item.image || item.images?.[0]) ? (
                     <img
-                      src={selectedDress.images[0]}
-                      alt={selectedDress.name}
+                      src={item.image || item.images[0]}
+                      alt={item.name}
                       className="dress-thumb"
                     />
                   ) : (
                     <div className="dress-thumb-placeholder">👗</div>
                   )}
                   <div>
-                    <div className="dress-info-name">{selectedDress.name}</div>
-                    <div className="dress-info-cat">{selectedDress.category}</div>
+                    <div className="dress-info-name">{item.name}</div>
+                    <div className="dress-info-cat">{item.category}</div>
                     <div className="dress-info-price">
-                      ₹{selectedDress.rentalPricePerDay.toLocaleString()}
+                      ₹{(item.price || item.rentalPricePerDay || 0).toLocaleString()}
                       <span>/day</span>
                     </div>
                   </div>
-                </>
-              ) : (
-                <div className="dress-thumb-placeholder">👗</div>
-              )}
+                </div>
+              ))}
             </div>
           </div>
 
