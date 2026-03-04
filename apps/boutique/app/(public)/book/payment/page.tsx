@@ -6,6 +6,7 @@ import { useBookingStore } from '../../../../lib/stores/bookingStore';
 import { BookingProgressBar } from '../../../../components/booking/BookingProgressBar';
 import { Button } from '../../../../components/ui/button';
 import { loadRazorpayScript, openRazorpayPayment } from '../../../../lib/razorpay';
+import { Calendar, PlusCircleIcon } from 'lucide-react';
 
 const PaymentPage = () => {
   const router = useRouter();
@@ -21,6 +22,7 @@ const PaymentPage = () => {
     userProfile,
     advancePaid,
     depositPaid,
+    bookingId,
     setStep,
     setAdvancePaid,
     setDepositPaid,
@@ -29,6 +31,9 @@ const PaymentPage = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingRazorpay, setIsLoadingRazorpay] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [countdown, setCountdown] = useState(8);
 
   const jewelleryOptions = [
     { id: 'j1', name: 'Traditional Necklace Set', price: 800 },
@@ -54,6 +59,14 @@ const PaymentPage = () => {
   useEffect(() => {
     setStep(5);
   }, [setStep]);
+
+  // Countdown timer for success modal redirect
+  useEffect(() => {
+    if (!showSuccessModal) return;
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [showSuccessModal, countdown]);
 
   const handleRazorpayPayment = async () => {
     setIsProcessing(true);
@@ -95,12 +108,16 @@ const PaymentPage = () => {
             setAdvancePaid(advanceAmount);
             setDepositPaid(depositAmount);
 
-            const bookingId = `BK${Math.floor(100000 + Math.random() * 900000)}`;
-            setBookingId(bookingId);
+            const newBookingId = `BK${Math.floor(100000 + Math.random() * 900000)}`;
+            setBookingId(newBookingId);
+
+            // Get logged-in user from localStorage
+            const storedUser = localStorage.getItem('user');
+            const userEmail = storedUser ? JSON.parse(storedUser).email : userProfile?.email || 'customer@example.com';
 
             try {
               const orderData = {
-                userId: 'user-123',
+                userId: storedUser ? JSON.parse(storedUser).id : 'user-123',
                 productId: selectedDress?.id,
                 productName: selectedDress?.name,
                 productImage: selectedDress?.images?.[0] || '/placeholder-product.jpg',
@@ -110,10 +127,13 @@ const PaymentPage = () => {
                 rentalPricePerDay: selectedDress?.rentalPricePerDay || 1000,
                 depositAmount: selectedDress?.depositAmount || 500,
                 totalAmount: totalPrice,
+                status: 'confirmed',
+                paymentStatus: 'paid',
                 customerName: userProfile?.name || 'Customer',
-                customerEmail: userProfile?.email || 'customer@example.com',
+                customerEmail: userEmail,
                 customerPhone: userProfile?.phone || '9999999999',
-                deliveryAddress: 'Default Address'
+                deliveryAddress: userProfile?.address || 'Default Address',
+                specialRequests: specialInstructions || '',
               };
 
               const orderResponse = await fetch('/api/orders', {
@@ -127,13 +147,23 @@ const PaymentPage = () => {
               if (orderResult.success) {
                 console.log('Order saved successfully:', orderResult.data.orderId);
                 localStorage.setItem('lastOrderId', orderResult.data.orderId);
+
+                setPaymentCompleted(true);
+
+                // Show success modal after 2 seconds
+                setTimeout(() => {
+                  setShowSuccessModal(true);
+
+                  // Redirect to My Bookings after 8 more seconds
+                  setTimeout(() => {
+                    router.push('/dashboard/bookings');
+                  }, 8000);
+                }, 2000);
               }
             } catch (orderError) {
               console.error('Error saving order:', orderError);
+              alert('Payment successful but failed to save booking. Please contact support.');
             }
-
-            console.log('Payment completed successfully, redirecting to confirmation with bookingId:', bookingId);
-            router.push(`/book/confirmation?bookingId=${bookingId}`);
           } catch (error) {
             console.error('Error in payment handler:', error);
             setIsProcessing(false);
@@ -169,13 +199,40 @@ const PaymentPage = () => {
     router.push('/book/review');
   };
 
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+  const formatDateFull = (d: string) =>
+    new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const modalDetails = [
+    { label: 'Booking ID',    value: bookingId || '',                                                               mono: true  },
+    { label: 'Dress',         value: selectedDress?.name || 'N/A'                                                               },
+    { label: 'Rental Period', value: `${selectedDate ? formatDate(selectedDate.toString()) : 'N/A'} – ${returnDate ? formatDate(returnDate.toString()) : 'N/A'}` },
+    { label: 'Amount Paid',   value: `₹${totalPayable.toLocaleString()}`                                                        },
+    { label: 'Status',        value: 'Confirmed',                                                                   highlight: true },
+  ];
+
   return (
     <>
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+
+        /* ── Brand Tokens ── */
+        :root {
+          --deep-rose:   #6B1F2A;
+          --accent-rose: #C96E82;
+          --blush:       #F0C4CC;
+          --stone:       #F5E6E8;
+          --ivory:       #FFF8F8;
+          --muted-rose:  #A0525E;
+          --body-text:   #7A5560;
+          --dark-body:   rgba(240, 196, 204, 0.7);
+          --dark-sub:    rgba(240, 196, 204, 0.55);
+        }
 
         .payment-root {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Jost', sans-serif;
           min-height: 100vh;
           background: #faf8f6;
           position: relative;
@@ -219,7 +276,7 @@ const PaymentPage = () => {
           padding: 40px 24px 80px;
         }
 
-        /* Header */
+        /* ── Header ── */
         .page-header {
           margin-bottom: 48px;
         }
@@ -239,6 +296,7 @@ const PaymentPage = () => {
           padding: 0;
           margin-bottom: 28px;
           transition: color 0.2s;
+          font-family: 'Jost', sans-serif;
         }
 
         .back-btn:hover { color: #C0436A; }
@@ -286,7 +344,7 @@ const PaymentPage = () => {
           opacity: 0.5;
         }
 
-        /* Main grid */
+        /* ── Main grid ── */
         .main-grid {
           display: grid;
           grid-template-columns: 1fr 420px;
@@ -298,7 +356,7 @@ const PaymentPage = () => {
           .main-grid { grid-template-columns: 1fr; }
         }
 
-        /* Card base */
+        /* ── Card base ── */
         .card {
           background: #fff;
           border: 1px solid rgba(192,67,106,0.1);
@@ -344,7 +402,7 @@ const PaymentPage = () => {
           padding: 28px;
         }
 
-        /* Payment breakdown rows */
+        /* ── Payment breakdown ── */
         .breakdown-section {
           margin-bottom: 28px;
         }
@@ -356,6 +414,7 @@ const PaymentPage = () => {
           text-transform: uppercase;
           color: #9a7a7a;
           margin-bottom: 12px;
+          font-family: 'Jost', sans-serif;
         }
 
         .breakdown-row {
@@ -373,6 +432,7 @@ const PaymentPage = () => {
           color: #3d2830;
           font-weight: 400;
           line-height: 1.3;
+          font-family: 'Jost', sans-serif;
         }
 
         .breakdown-row-sub {
@@ -380,6 +440,7 @@ const PaymentPage = () => {
           color: #b09898;
           margin-top: 3px;
           font-weight: 300;
+          font-family: 'Jost', sans-serif;
         }
 
         .breakdown-row-amount {
@@ -388,6 +449,7 @@ const PaymentPage = () => {
           font-weight: 500;
           letter-spacing: -0.01em;
           white-space: nowrap;
+          font-family: 'Jost', sans-serif;
         }
 
         .breakdown-row-amount.muted { color: #9a7a7a; }
@@ -398,7 +460,7 @@ const PaymentPage = () => {
           margin: 4px 0 20px;
         }
 
-        /* Pill badge */
+        /* ── Badge ── */
         .badge {
           display: inline-flex;
           align-items: center;
@@ -410,6 +472,7 @@ const PaymentPage = () => {
           padding: 4px 10px;
           border-radius: 20px;
           margin-top: 4px;
+          font-family: 'Jost', sans-serif;
         }
 
         .badge-green {
@@ -418,19 +481,14 @@ const PaymentPage = () => {
           border: 1px solid #c3e8d5;
         }
 
-        .badge-rose {
-          background: #fdf2f5;
-          color: #C0436A;
-          border: 1px solid rgba(192,67,106,0.2);
-        }
-
-        /* Summary card right */
+        /* ── Summary card ── */
         .summary-line {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 11px 0;
           font-size: 14px;
+          font-family: 'Jost', sans-serif;
         }
 
         .summary-line .lbl { color: #7a6262; font-weight: 300; }
@@ -457,6 +515,7 @@ const PaymentPage = () => {
           color: #9a7a7a;
           margin-bottom: 6px;
           font-weight: 400;
+          font-family: 'Jost', sans-serif;
         }
 
         .summary-total-amount {
@@ -472,11 +531,11 @@ const PaymentPage = () => {
           font-size: 20px;
           color: #9a7a7a;
           vertical-align: super;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Jost', sans-serif;
           font-weight: 300;
         }
 
-        /* Info bullets */
+        /* ── Info list ── */
         .info-list {
           margin: 20px 0 0;
           padding: 0;
@@ -494,6 +553,7 @@ const PaymentPage = () => {
           align-items: flex-start;
           gap: 8px;
           line-height: 1.5;
+          font-family: 'Jost', sans-serif;
         }
 
         .info-list li::before {
@@ -504,7 +564,7 @@ const PaymentPage = () => {
           margin-top: 2px;
         }
 
-        /* Pay button */
+        /* ── Pay button ── */
         .pay-btn-wrapper {
           margin-top: 24px;
         }
@@ -516,7 +576,7 @@ const PaymentPage = () => {
           color: #fff;
           border: none;
           border-radius: 2px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Jost', sans-serif;
           font-size: 14px;
           font-weight: 500;
           letter-spacing: 0.08em;
@@ -543,14 +603,8 @@ const PaymentPage = () => {
           transform: translateY(-1px);
         }
 
-        .pay-btn:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .pay-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
+        .pay-btn:active:not(:disabled) { transform: translateY(0); }
+        .pay-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
         .pay-btn-processing {
           display: flex;
@@ -570,7 +624,6 @@ const PaymentPage = () => {
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Razorpay trust badge */
         .trust-badge {
           display: flex;
           align-items: center;
@@ -581,25 +634,319 @@ const PaymentPage = () => {
           color: #b09898;
           font-weight: 300;
           letter-spacing: 0.03em;
+          font-family: 'Jost', sans-serif;
         }
 
         .trust-badge svg { width: 12px; height: 12px; }
 
-        /* Progress bar wrapper */
-        .progress-wrapper {
-          margin-bottom: 40px;
-        }
+        .progress-wrapper { margin-bottom: 40px; }
 
-        /* Entrance animations */
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(18px); }
-          to { opacity: 1; transform: translateY(0); }
+          to   { opacity: 1; transform: translateY(0); }
         }
 
         .animate-1 { animation: fadeUp 0.5s ease both; }
         .animate-2 { animation: fadeUp 0.5s 0.1s ease both; }
         .animate-3 { animation: fadeUp 0.5s 0.2s ease both; }
         .animate-4 { animation: fadeUp 0.5s 0.3s ease both; }
+
+        /* ════════════════════════════
+           SUCCESS MODAL
+        ════════════════════════════ */
+
+        .sm-overlay {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(107, 31, 42, 0.55);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+          z-index: 999;
+          padding: 20px;
+        }
+
+        .sm-card {
+          position: relative;
+          width: 100%;
+          max-width: 468px;
+          background: var(--ivory);
+          border-radius: 28px;
+          overflow: hidden;
+          animation: smCardEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          box-shadow:
+            0 2px 0 0 var(--blush),
+            0 24px 64px rgba(107, 31, 42, 0.18),
+            0 8px 24px rgba(107, 31, 42, 0.08);
+        }
+
+        @keyframes smCardEnter {
+          from { opacity: 0; transform: translateY(28px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .sm-header {
+          background: var(--deep-rose);
+          padding: 36px 36px 32px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .sm-header::before {
+          content: '';
+          position: absolute; inset: 0;
+          background:
+            radial-gradient(ellipse 60% 50% at 15% 110%, rgba(201,110,130,0.18) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 40% at 85% -10%, rgba(240,196,204,0.1) 0%, transparent 60%);
+          pointer-events: none;
+        }
+
+        .sm-header::after {
+          content: '';
+          position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(240,196,204,0.45), transparent);
+        }
+
+        /* Confetti */
+        .sm-confetti {
+          position: absolute; top: 0; left: 0; right: 0;
+          height: 80px; pointer-events: none;
+        }
+
+        .sm-dot {
+          position: absolute;
+          width: 4px; height: 4px; border-radius: 50%;
+          background: var(--blush);
+          animation: dotFall 1.4s ease-out forwards;
+          opacity: 0;
+        }
+        .sm-dot:nth-child(2) { background: var(--accent-rose); }
+        .sm-dot:nth-child(3) { background: var(--stone); }
+        .sm-dot:nth-child(4) { background: var(--accent-rose); }
+        .sm-dot:nth-child(5) { background: var(--blush); }
+
+        @keyframes dotFall {
+          0%   { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(72px); }
+        }
+
+        /* Check ring */
+        .sm-check-wrap {
+          position: relative;
+          margin-bottom: 20px;
+          z-index: 1;
+        }
+
+        .sm-ring-outer {
+          width: 76px; height: 76px; border-radius: 50%;
+          border: 1px solid rgba(240,196,204,0.2);
+          display: flex; align-items: center; justify-content: center;
+          position: relative;
+        }
+
+        .sm-ring-outer::before {
+          content: '';
+          position: absolute; inset: -8px; border-radius: 50%;
+          border: 1px dashed rgba(240,196,204,0.15);
+          animation: orbitSpin 18s linear infinite;
+        }
+
+        @keyframes orbitSpin { to { transform: rotate(360deg); } }
+
+        .sm-ring-inner {
+          width: 58px; height: 58px; border-radius: 50%;
+          background: rgba(240,196,204,0.1);
+          border: 1.5px solid rgba(240,196,204,0.3);
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .sm-ring-inner svg {
+          width: 24px; height: 24px;
+          stroke: var(--blush); stroke-width: 2.2;
+          stroke-dasharray: 38; stroke-dashoffset: 38;
+          animation: drawCheck 0.65s 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+
+        @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+        /* Header text */
+        .sm-header-label {
+          font-family: 'Jost', sans-serif;
+          font-size: 10px; font-weight: 500;
+          letter-spacing: 0.35em; text-transform: uppercase;
+          color: var(--dark-sub);
+          margin-bottom: 8px; z-index: 1;
+        }
+
+        .sm-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 30px; font-weight: 300;
+          color: var(--ivory);
+          text-align: center; line-height: 1.2;
+          z-index: 1;
+        }
+
+        .sm-title em { font-style: italic; color: var(--blush); }
+
+        /* Modal body */
+        .sm-body { padding: 28px 32px 32px; }
+
+        .sm-message {
+          font-size: 13px; font-weight: 300;
+          color: var(--body-text);
+          text-align: center; line-height: 1.85;
+          margin-bottom: 24px;
+          font-family: 'Jost', sans-serif;
+        }
+
+        /* Details table */
+        .sm-details {
+          border: 1px solid var(--stone);
+          border-radius: 16px; overflow: hidden;
+          margin-bottom: 24px;
+        }
+
+        .sm-row {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 11px 18px; gap: 16px;
+          background: var(--ivory);
+          border-bottom: 1px solid var(--stone);
+          transition: background 0.15s;
+        }
+
+        .sm-row:nth-child(even) { background: var(--stone); }
+        .sm-row:last-child      { border-bottom: none; }
+        .sm-row:hover           { background: #f7d5db; }
+
+        .sm-label {
+          font-family: 'Jost', sans-serif;
+          font-size: 10px; font-weight: 500;
+          letter-spacing: 0.35em; text-transform: uppercase;
+          color: var(--accent-rose); flex-shrink: 0;
+        }
+
+        .sm-value {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 16px; font-weight: 400;
+          color: var(--deep-rose); text-align: right;
+        }
+
+        .sm-value.mono {
+          font-family: 'Jost', sans-serif;
+          font-size: 12px; font-weight: 400;
+          letter-spacing: 0.1em; color: var(--muted-rose);
+        }
+
+        .sm-value.highlight {
+          font-family: 'Jost', sans-serif;
+          font-size: 14px; font-weight: 500;
+          color: #2d7a52;
+          display: flex; align-items: center; gap: 6px;
+        }
+
+        .sm-value.highlight::before {
+          content: '';
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #4caf78;
+          box-shadow: 0 0 7px rgba(76,175,120,0.5);
+          flex-shrink: 0;
+          animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.4; }
+        }
+
+        /* Divider */
+        .sm-divider {
+          display: flex; align-items: center; gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .sm-divider-line { flex: 1; height: 1px; background: var(--stone); }
+        .sm-divider-icon { color: var(--accent-rose); font-size: 14px; line-height: 1; }
+
+        /* Modal primary button */
+        .sm-cta {
+          display: block; width: 100%; padding: 15px;
+          background: var(--deep-rose);
+          border: 1.5px solid var(--deep-rose);
+          border-radius: 14px;
+          font-family: 'Jost', sans-serif;
+          font-size: 11px; font-weight: 500;
+          letter-spacing: 0.3em; text-transform: uppercase;
+          color: var(--ivory); cursor: pointer;
+          margin-bottom: 12px;
+          transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+          box-shadow: 0 4px 16px rgba(107,31,42,0.22);
+        }
+
+        .sm-cta:hover {
+          background: var(--muted-rose); border-color: var(--muted-rose);
+          transform: translateY(-1px);
+          box-shadow: 0 8px 24px rgba(107,31,42,0.28);
+        }
+
+        .sm-cta:active { transform: scale(0.98); }
+
+        /* Modal ghost button */
+        .sm-cta-ghost {
+          display: block; width: 100%; padding: 13px;
+          background: transparent;
+          border: 1.5px solid var(--accent-rose);
+          border-radius: 14px;
+          font-family: 'Jost', sans-serif;
+          font-size: 11px; font-weight: 500;
+          letter-spacing: 0.3em; text-transform: uppercase;
+          color: var(--accent-rose); cursor: pointer;
+          margin-bottom: 24px;
+          transition: background 0.2s, color 0.2s, transform 0.15s;
+        }
+
+        .sm-cta-ghost:hover {
+          background: var(--stone); color: var(--deep-rose);
+          transform: translateY(-1px);
+        }
+
+        .sm-cta-ghost:active { transform: scale(0.98); }
+
+        /* Progress + countdown */
+        .sm-progress-track {
+          height: 2px; border-radius: 2px;
+          background: var(--stone); margin-bottom: 12px; overflow: hidden;
+        }
+
+        .sm-progress-fill {
+          height: 100%; border-radius: 2px;
+          background: linear-gradient(90deg, var(--accent-rose), var(--blush));
+          transition: width 1s linear;
+        }
+
+        .sm-redirect {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .sm-redirect-text {
+          font-size: 11px; font-weight: 300;
+          color: var(--body-text); letter-spacing: 0.04em;
+          font-family: 'Jost', sans-serif;
+        }
+
+        .sm-countdown {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 24px; height: 24px; border-radius: 50%;
+          background: var(--stone); border: 1px solid var(--blush);
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 13px; font-weight: 400;
+          color: var(--accent-rose);
+          font-variant-numeric: tabular-nums;
+        }
       `}</style>
 
       <div className="payment-root">
@@ -630,7 +977,7 @@ const PaymentPage = () => {
           {/* Main Grid */}
           <div className="main-grid">
 
-            {/* Left — Payment Information */}
+            {/* Left — Payment Breakdown */}
             <div className="animate-3">
               <div className="card">
                 <div className="card-header">
@@ -645,7 +992,6 @@ const PaymentPage = () => {
 
                 <div className="card-body">
 
-                  {/* Rental total */}
                   <div className="breakdown-section">
                     <p className="breakdown-label">Rental</p>
 
@@ -678,7 +1024,6 @@ const PaymentPage = () => {
 
                   <div className="divider" />
 
-                  {/* Deposit */}
                   <div className="breakdown-section" style={{ marginBottom: 0 }}>
                     <p className="breakdown-label">Security</p>
 
@@ -716,7 +1061,6 @@ const PaymentPage = () => {
 
                 <div className="card-body">
 
-                  {/* Line items */}
                   <div className="summary-line">
                     <span className="lbl">Dress Rental</span>
                     <span className="val">₹{(totalPrice - jewelleryTotal).toLocaleString()}</span>
@@ -755,7 +1099,6 @@ const PaymentPage = () => {
                     <span className="val">₹{depositAmount.toLocaleString()}</span>
                   </div>
 
-                  {/* Total block */}
                   <div className="summary-total-block">
                     <p className="summary-total-label">Total Due Now</p>
                     <div className="summary-total-amount">
@@ -763,13 +1106,11 @@ const PaymentPage = () => {
                     </div>
                   </div>
 
-                  {/* Info */}
                   <ul className="info-list">
                     <li>Advance of 30% locks in your booking date</li>
                     <li>Security deposit returned within 3 days of return</li>
                   </ul>
 
-                  {/* Pay button */}
                   <div className="pay-btn-wrapper">
                     <button
                       className="pay-btn"
@@ -807,6 +1148,82 @@ const PaymentPage = () => {
 
           </div>
         </div>
+
+        {/* ── Success Modal ── */}
+        {showSuccessModal && (
+          <div className="sm-overlay">
+            <div className="sm-card">
+
+              <div className="sm-header">
+                <div className="sm-confetti">
+                  {[
+                    { left: '12%', delay: '0.3s' },
+                    { left: '28%', delay: '0.5s' },
+                    { left: '48%', delay: '0.2s' },
+                    { left: '64%', delay: '0.6s' },
+                    { left: '80%', delay: '0.4s' },
+                  ].map((d, i) => (
+                    <span key={i} className="sm-dot" style={{ left: d.left, animationDelay: d.delay }} />
+                  ))}
+                </div>
+
+                <div className="sm-check-wrap">
+                  <div className="sm-ring-outer">
+                    <div className="sm-ring-inner">
+                      <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="sm-header-label">Booking confirmed</p>
+                <h2 className="sm-title">Your dress is <em>reserved</em></h2>
+              </div>
+
+              <div className="sm-body">
+                <p className="sm-message">
+                  Your rental has been confirmed. A summary has been sent to your registered email address.
+                </p>
+
+                <div className="sm-details">
+                  {modalDetails.map((d, i) => (
+                    <div className="sm-row" key={i}>
+                      <span className="sm-label">{d.label}</span>
+                      <span className={`sm-value${d.mono ? ' mono' : ''}${d.highlight ? ' highlight' : ''}`}>
+                        {d.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="sm-divider">
+                  <div className="sm-divider-line" />
+                  <span className="sm-divider-icon">✿</span>
+                  <div className="sm-divider-line" />
+                </div>
+
+                <button className="sm-cta" onClick={() => router.push('/dashboard/bookings')}>
+                  View My Bookings
+                </button>
+                <button className="sm-cta-ghost" onClick={() => router.push('/')}>
+                  Continue Browsing
+                </button>
+
+                <div className="sm-progress-track">
+                  <div className="sm-progress-fill" style={{ width: `${((8 - countdown) / 8) * 100}%` }} />
+                </div>
+
+                <div className="sm-redirect">
+                  <span className="sm-redirect-text">Redirecting to My Bookings in</span>
+                  <span className="sm-countdown">{countdown}</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );
