@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookingCard } from '../../../../components/dashboard/BookingCard';
 import { Button } from '../../../../components/ui/button';
+import { StarRating } from '../../../../components/ui/StarRating';
 import {
   Heart,
   User,
@@ -90,6 +91,13 @@ const MyBookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(null);
+  
+  // Review modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
+  const [userRating, setUserRating] = useState<number>(0);
+  const [userReviewText, setUserReviewText] = useState<string>('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Fetch current user and bookings on mount
   React.useEffect(() => {
@@ -169,8 +177,66 @@ const MyBookingsPage = () => {
     alert(`Rescheduling booking ${id}`);
   };
 
-  const handleLeaveReview = (id: string) => {
-    alert(`Leaving review for booking ${id}`);
+  // Submit review to API
+  const submitReview = async (orderId: string, rating: number, reviewText: string) => {
+    if (rating < 1) {
+      alert('Please select at least 1 star');
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          rating: rating,
+          review: reviewText
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Thank you for your review!');
+        
+        // Update local state
+        setBookings(prevBookings => prevBookings.map(b => 
+          b.orderId === orderId
+            ? { ...b, isReviewed: true, existingRating: rating }
+            : b
+        ));
+        
+        setShowReviewModal(false);
+        setUserRating(0);
+        setUserReviewText('');
+      } else {
+        alert(result.error || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.error('Review submission error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleLeaveReview = (id: string, rating?: number) => {
+    const booking = bookings.find(b => b.orderId === id);
+    if (!booking) return;
+
+    if (rating) {
+      // User clicked stars directly - submit rating immediately
+      submitReview(booking.orderId, rating, '');
+    } else {
+      // Open modal for full review
+      setSelectedBookingForReview(booking);
+      setShowReviewModal(true);
+    }
   };
 
   const handleBookAgain = (id: string) => {
@@ -985,6 +1051,103 @@ const MyBookingsPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && selectedBookingForReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto">
+            {/* Close button */}
+            <button
+              onClick={() => setShowReviewModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Rate Your Experience
+              </h3>
+              <p className="text-sm text-gray-600">
+                How was your experience with this product?
+              </p>
+            </div>
+
+            {/* Product Info */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+              <img
+                src={selectedBookingForReview.dress.image}
+                alt={selectedBookingForReview.dress.name}
+                className="w-16 h-16 object-cover rounded"
+              />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">
+                  {selectedBookingForReview.dress.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {selectedBookingForReview.dress.category}
+                </p>
+              </div>
+            </div>
+
+            {/* Star Rating */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Rating *
+              </label>
+              <div className="flex justify-center">
+                <StarRating
+                  rating={userRating}
+                  onRate={setUserRating}
+                  editable={true}
+                  size="lg"
+                />
+              </div>
+              {userRating > 0 && (
+                <p className="text-center text-sm text-brand-rose mt-2">
+                  You selected {userRating} out of 5 stars
+                </p>
+              )}
+            </div>
+
+            {/* Written Review (Optional) */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Review <span className="text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={userReviewText}
+                onChange={(e) => setUserReviewText(e.target.value)}
+                placeholder="Share your experience with others..."
+                maxLength={500}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-rose focus:border-transparent resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {userReviewText.length}/500 characters
+              </p>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              onClick={() => submitReview(selectedBookingForReview.orderId, userRating, userReviewText)}
+              disabled={userRating === 0 || submittingReview}
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                userRating === 0 || submittingReview
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-brand-rose hover:bg-brand-rose/90 text-white'
+              }`}
+            >
+              {submittingReview ? 'Submitting...' : `Submit ${userRating > 0 ? `${userRating}-Star` : ''} Review`}
+            </button>
+
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              Reviews help other customers make informed decisions
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 };

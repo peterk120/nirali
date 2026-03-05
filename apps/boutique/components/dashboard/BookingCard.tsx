@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import Image from 'next/image';
 import { DepositStatusBadge } from '../booking/DepositStatusBadge';
+import { StarRating } from '../../components/ui/StarRating';
+import { Star } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -17,6 +19,8 @@ interface Booking {
   amountPaid: number;
   depositStatus: 'held' | 'refunded' | 'refund_initiated';
   refundAmount?: number;
+  isReviewed?: boolean;
+  existingRating?: number;
 }
 
 interface BookingCardProps {
@@ -25,7 +29,7 @@ interface BookingCardProps {
   onRescheduleBooking: (id: string) => void;
   onMarkReturned: (id: string) => void;
   onReportDamage: (id: string) => void;
-  onLeaveReview: (id: string) => void;
+  onLeaveReview: (id: string, rating?: number) => void; // Optional rating parameter for direct star click
   onBookAgain: (id: string) => void;
   onViewRefundStatus: (id: string) => void;
 }
@@ -125,21 +129,49 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         );
       case 'completed':
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onLeaveReview(booking.id)}
-            >
-              Leave Review
-            </Button>
-            <Button 
-              size="sm"
-              onClick={() => onBookAgain(booking.id)}
-              className="bg-brand-rose hover:bg-brand-rose/90 text-white"
-            >
-              Book Again
-            </Button>
+          <div className="flex flex-col gap-3 w-full">
+            {/* Show review status or rating button */}
+            {booking.isReviewed && booking.existingRating ? (
+              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Star className="w-5 h-5 fill-green-600 text-green-600" />
+                <span className="text-sm font-medium text-green-800">
+                  You rated this {booking.existingRating}.0 stars
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <StarRating 
+                  rating={0}
+                  onRate={(rating) => onLeaveReview(booking.id, rating)}
+                  editable={true}
+                  size="md"
+                />
+                <span className="text-sm text-amber-800 font-medium">
+                  Rate this product
+                </span>
+              </div>
+            )}
+            
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2">
+              {!booking.isReviewed && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => onLeaveReview(booking.id)}
+                  className="text-brand-rose border-brand-rose hover:bg-brand-rose/10"
+                >
+                  Write Review
+                </Button>
+              )}
+              <Button 
+                size="sm"
+                onClick={() => onBookAgain(booking.id)}
+                className="bg-brand-rose hover:bg-brand-rose/90 text-white"
+              >
+                Book Again
+              </Button>
+            </div>
           </div>
         );
       case 'cancelled':
