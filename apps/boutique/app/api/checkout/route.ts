@@ -115,10 +115,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Payment details are missing' }, { status: 400 });
         }
 
-        // Allow simulation bypass
+        // DEVELOPMENT MODE: Allow payment simulation for testing
+        // In production (when SIMULATE_PAYMENT=false), this should be disabled
         const isSimulation = paymentDetails.razorpaySignature === 'SIM_SIG_123456789';
 
         if (!isSimulation) {
+            // PRODUCTION MODE: Verify actual Razorpay signature
             const isPaymentValid = paymentService.verifyPayment({
                 orderId: paymentDetails.razorpayOrderId,
                 paymentId: paymentDetails.razorpayPaymentId,
@@ -128,6 +130,8 @@ export async function POST(request: NextRequest) {
             if (!isPaymentValid) {
                 return NextResponse.json({ success: false, error: 'Payment verification failed' }, { status: 400 });
             }
+        } else {
+            console.log('⚠️ Development Mode: Payment simulation detected - skipping real verification');
         }
 
         // 2. Create Orders with stock validation

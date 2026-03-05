@@ -16,6 +16,8 @@ export default function NewArrivalsGrid() {
   const addItem = useCartStore((state) => state.addItem);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProductForCart, setSelectedProductForCart] = useState<any | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string>('');
 
   useEffect(() => {
     const fetchNewArrivals = async () => {
@@ -330,11 +332,41 @@ export default function NewArrivalsGrid() {
     return gradients[index % gradients.length];
   };
 
+  // Size Selection Dialog Handler
+  const handleSizeSelection = async () => {
+    if (!selectedSize) {
+      alert('Please select a size');
+      return;
+    }
+
+    if (selectedProductForCart) {
+      // Add to cart with selected size
+      await addItem({
+        productId: selectedProductForCart.id || selectedProductForCart._id,
+        quantity: 1,
+        rentalDays: 4,
+        size: selectedSize,
+        name: selectedProductForCart.name,
+        price: selectedProductForCart.price,
+        image: selectedProductForCart.image,
+        category: selectedProductForCart.category
+      });
+
+      // Show toast notification
+      showAddedToCart(selectedProductForCart.name);
+      
+      // Close dialog
+      setSelectedProductForCart(null);
+      setSelectedSize('');
+    }
+  };
+
   return (
-    <section
-      className="py-24 px-12 bg-brand-ivory"
-      style={{ padding: '60px 20px', background: '#FAF7F0' }}
-    >
+    <>
+      <section
+        className="py-24 px-12 bg-brand-ivory"
+        style={{ padding: '60px 20px', background: '#FAF7F0' }}
+      >
       <div className="flex justify-between items-end mb-16" style={{ flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div className="relative mb-4">
@@ -740,19 +772,9 @@ export default function NewArrivalsGrid() {
                         return;
                       }
 
-                      // Add to cart using cart store
-                      await addItem({
-                        productId: product.id || product._id,
-                        quantity: 1,
-                        rentalDays: 4,
-                        name: product.name,
-                        price: product.price,
-                        image: product.image,
-                        category: product.category
-                      });
-
-                      // Show toast notification
-                      showAddedToCart(product.name);
+                      // Open size selection dialog
+                      setSelectedProductForCart(product);
+                      setSelectedSize('');
                     }}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
@@ -764,6 +786,229 @@ export default function NewArrivalsGrid() {
           ))}
         </div>
       )}
-    </section>
+      </section>
+
+      {/* Size Selection Modal */}
+      {selectedProductForCart && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => {
+            setSelectedProductForCart(null);
+            setSelectedSize('');
+          }}
+        >
+          <div
+            style={{
+              background: '#FFF8F8',
+              borderRadius: '8px',
+              maxWidth: '450px',
+              width: '100%',
+              padding: '32px',
+              position: 'relative',
+              boxShadow: '0 20px 60px rgba(107, 31, 42, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setSelectedProductForCart(null);
+                setSelectedSize('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#6B1F2A',
+                padding: '0',
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+
+            {/* Product Image */}
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '3/4',
+                maxWidth: '200px',
+                margin: '0 auto 24px',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                background: '#F5F0E4'
+              }}
+            >
+              <img
+                src={selectedProductForCart.image}
+                alt={selectedProductForCart.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+
+            {/* Product Name */}
+            <h3
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 'clamp(1.5rem, 3vw, 1.75rem)',
+                fontWeight: 400,
+                color: '#1A1A2E',
+                textAlign: 'center',
+                marginBottom: '8px'
+              }}
+            >
+              {selectedProductForCart.name}
+            </h3>
+
+            {/* Price */}
+            <p
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                fontSize: '1.1rem',
+                fontWeight: 500,
+                color: '#C0436A',
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}
+            >
+              ₹{selectedProductForCart.price?.toLocaleString()} / 4 days
+            </p>
+
+            {/* Size Selector */}
+            <div style={{ marginBottom: '24px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  color: '#6B1F2A',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                Select Size
+              </label>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '8px'
+                }}
+              >
+                {['S', 'M', 'L', 'XL'].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    style={{
+                      padding: '12px 8px',
+                      border: selectedSize === size ? '2px solid #6B1F2A' : '1px solid #F0C4CC',
+                      background: selectedSize === size ? '#6B1F2A' : 'transparent',
+                      color: selectedSize === size ? '#FFF8F8' : '#7A5560',
+                      fontFamily: "'Jost', sans-serif",
+                      fontSize: '0.9rem',
+                      fontWeight: selectedSize === size ? 600 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+                marginTop: '24px'
+              }}
+            >
+              <button
+                onClick={() => {
+                  setSelectedProductForCart(null);
+                  setSelectedSize('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  border: '1px solid #F0C4CC',
+                  color: '#7A5560',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLElement).style.background = '#F5E6E8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLElement).style.background = 'transparent';
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSizeSelection}
+                disabled={!selectedSize}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: !selectedSize ? '#F0C4CC' : '#6B1F2A',
+                  border: 'none',
+                  color: '#FFF8F8',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: !selectedSize ? 'not-allowed' : 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedSize) {
+                    (e.target as HTMLElement).style.background = '#A0525E';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedSize) {
+                    (e.target as HTMLElement).style.background = '#6B1F2A';
+                  }
+                }}
+              >
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

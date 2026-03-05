@@ -7,6 +7,13 @@ import { BookingProgressBar } from '../../../../components/booking/BookingProgre
 import { Button } from '../../../../components/ui/button';
 import { loadRazorpayScript, openRazorpayPayment } from '../../../../lib/razorpay';
 import { Calendar, PlusCircleIcon } from 'lucide-react';
+import { 
+  SIMULATE_PAYMENT, 
+  SIMULATED_SIGNATURE, 
+  PAYMENT_DELAY_MS,
+  SUCCESS_MODAL_DELAY_MS,
+  REDIRECT_DELAY_MS 
+} from '../../../../config/payment';
 
 const PaymentPage = () => {
   const router = useRouter();
@@ -104,13 +111,19 @@ const PaymentPage = () => {
   const handleRazorpayPayment = async () => {
     setIsProcessing(true);
 
-    // SIMULATED PAYMENT SUCCESS (as requested by user)
-    // In production, this would be replaced by the Razorpay integration
-    setTimeout(async () => {
-      try {
-        console.log('Simulating successful payment verification...');
-
-        // Call the consolidated checkout API with dummy payment data
+    try {
+      if (SIMULATE_PAYMENT) {
+        // ============================================
+        // DEVELOPMENT MODE: Simulated Payment Flow
+        // ============================================
+        console.log('💰 Development Mode: Simulating payment...');
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, PAYMENT_DELAY_MS));
+        
+        console.log('✅ Payment simulated successfully');
+        
+        // Call checkout API directly with simulated payment details
         const checkoutRes = await fetch('/api/checkout', {
           method: 'POST',
           headers: {
@@ -126,11 +139,10 @@ const PaymentPage = () => {
               address: userProfile?.address || 'Default Address'
             },
             paymentDetails: {
-              // Dummy data for simulation - bypassed verification on backend for simulation purposes 
-              // OR we can make backend accept "SIMULATED_SUCCESS" if in dev mode
+              // Simulated payment signature for development
               razorpayOrderId: `SIM_ORD_${Date.now()}`,
               razorpayPaymentId: `SIM_PAY_${Date.now()}`,
-              razorpaySignature: 'SIM_SIG_123456789'
+              razorpaySignature: SIMULATED_SIGNATURE
             },
             bookingPeriod: {
               startDate: selectedDate,
@@ -143,32 +155,82 @@ const PaymentPage = () => {
 
         const checkoutResult = await checkoutRes.json();
 
-        if (checkoutResult.success) {
-          setAdvancePaid(advanceAmount);
-          setDepositPaid(depositAmount);
-          setBookingId(checkoutResult.orders[0] || 'Confirmed');
-          setPaymentCompleted(true);
-
-          // Update global store counts
-          const { useCartStore } = await import('../../../../lib/stores/cartStore');
-          useCartStore.getState().fetchCart();
-          const { useAuthStore } = await import('../../../../lib/stores/authStore');
-          useAuthStore.getState().fetchBookingsCount();
-
-          setShowSuccessModal(true);
-          setTimeout(() => {
-            router.push('/dashboard/bookings');
-          }, 8000);
-        } else {
+        if (!checkoutResult.success) {
           throw new Error(checkoutResult.error || 'Checkout failed');
         }
-      } catch (err: any) {
-        console.error('Simulated checkout error:', err);
-        alert(err.message || 'Payment simulated successfully but encounterd an error creating your booking.');
-      } finally {
-        setIsProcessing(false);
+
+        console.log('✅ Orders created:', checkoutResult.orders);
+
+        // Success - update state
+        setAdvancePaid(advanceAmount);
+        setDepositPaid(depositAmount);
+        setBookingId(checkoutResult.orders[0] || 'Confirmed');
+        setPaymentCompleted(true);
+
+        // Refresh cart and bookings
+        const { useCartStore } = await import('../../../../lib/stores/cartStore');
+        useCartStore.getState().fetchCart();
+        
+        const { useAuthStore } = await import('../../../../lib/stores/authStore');
+        useAuthStore.getState().fetchBookingsCount();
+
+        // Show success modal after configured delay
+        setTimeout(() => {
+          setShowSuccessModal(true);
+        }, SUCCESS_MODAL_DELAY_MS);
+        
+        // Redirect to bookings page
+        setTimeout(() => {
+          router.push('/dashboard/bookings');
+        }, REDIRECT_DELAY_MS);
+        
+      } else {
+        // ============================================
+        // PRODUCTION MODE: Real Razorpay Payment Flow
+        // ============================================
+        console.log('🔐 Production Mode: Processing real Razorpay payment...');
+        
+        // TODO: Uncomment when Razorpay is verified and ready for production
+        // const paymentOptions = {
+        //   key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        //   amount: totalPayable * 100, // Convert to paise
+        //   currency: "INR",
+        //   name: "Nirali Sai Boutique",
+        //   description: "Booking Payment",
+        //   order_id: await createRazorpayOrder(totalPayable),
+        //   handler: async (response) => {
+        //     // Real payment succeeded - call checkout API
+        //     const checkoutRes = await fetch('/api/checkout', {
+        //       method: 'POST',
+        //       headers: {
+        //         'Content-Type': 'application/json',
+        //         'Authorization': `Bearer ${localStorage.getItem('token')}`
+        //       },
+        //       body: JSON.stringify({
+        //         items: itemsToBook,
+        //         customerDetails: { ... },
+        //         paymentDetails: {
+        //           razorpayOrderId: response.razorpay_order_id,
+        //           razorpayPaymentId: response.razorpay_payment_id,
+        //           razorpaySignature: response.razorpay_signature
+        //         },
+        //         bookingPeriod: { ... }
+        //       })
+        //     });
+        //     // Handle response...
+        //   }
+        // };
+        // await openRazorpayPayment(paymentOptions);
+        
+        console.warn('⚠️ Razorpay not configured. Please set SIMULATE_PAYMENT=true in config/payment.ts for testing.');
+        alert('Real Razorpay payment flow will be activated once payment gateway is verified.\n\nFor now, please enable simulation mode in config/payment.ts');
       }
-    }, 1500); // Small realistic delay
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      alert(err.message || 'An error occurred during payment processing.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleBack = () => {

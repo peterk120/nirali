@@ -31,6 +31,8 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string>('');
 
   // Initialize wishlist state from localStorage or API
   useEffect(() => {
@@ -95,21 +97,35 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
     router.push(`/book/dress?dressId=${product._id || product.id}`);
   };
 
+  const handleAddToCartClick = () => {
+    // Open size selection modal
+    setShowSizeModal(true);
+    setSelectedSize('');
+  };
+
   const handleAddToCart = async () => {
+    if (!selectedSize) {
+      showError('Please select a size');
+      return;
+    }
+
     setLoading(true);
     try {
       const { useCartStore } = await import('../../../../../lib/stores/cartStore');
+      const { showAddedToCart } = await import('../../../../../lib/toast');
       await useCartStore.getState().addItem({
         productId: product._id || product.id,
         quantity: quantity,
         rentalDays: parseInt(searchParams.days as string) || 3,
-        size: product.size || 'Medium',
+        size: selectedSize,
         name: product.name,
         price: product.price,
         image: product.image,
         category: product.category
       });
-      showSuccess('Added to cart');
+      showAddedToCart(product.name);
+      setShowSizeModal(false);
+      setSelectedSize('');
     } catch (error) {
       console.error('Error adding to cart:', error);
       showError('Failed to add to cart');
@@ -130,8 +146,9 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <motion.div
           className="bg-white rounded-2xl shadow-lg overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
@@ -240,7 +257,7 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
                   size="lg"
                   variant="outline"
                   className="flex-1 border-brand-rose text-brand-rose hover:bg-brand-rose/10 py-3 text-base font-medium"
-                  onClick={handleAddToCart}
+                  onClick={handleAddToCartClick}
                   disabled={loading}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
@@ -326,5 +343,228 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
         </motion.div>
       </div>
     </div>
+
+    {/* Size Selection Modal */}
+    {showSizeModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => {
+            setShowSizeModal(false);
+            setSelectedSize('');
+          }}
+        >
+          <div
+            style={{
+              background: '#FFF8F8',
+              borderRadius: '8px',
+              maxWidth: '450px',
+              width: '100%',
+              padding: '32px',
+              position: 'relative',
+              boxShadow: '0 20px 60px rgba(107, 31, 42, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowSizeModal(false);
+                setSelectedSize('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#6B1F2A',
+                padding: '0',
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+
+            {/* Product Image */}
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '3/4',
+                maxWidth: '200px',
+                margin: '0 auto 24px',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                background: '#F5F0E4'
+              }}
+            >
+              <img
+                src={product.image || '/placeholder-product.jpg'}
+                alt={product.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+
+            {/* Product Name */}
+            <h3
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 'clamp(1.5rem, 3vw, 1.75rem)',
+                fontWeight: 400,
+                color: '#1A1A2E',
+                textAlign: 'center',
+                marginBottom: '8px'
+              }}
+            >
+              {product.name}
+            </h3>
+
+            {/* Price */}
+            <p
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                fontSize: '1.1rem',
+                fontWeight: 500,
+                color: '#C0436A',
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}
+            >
+              ₹{product.price?.toLocaleString()} / {searchParams.days || 3} days
+            </p>
+
+            {/* Size Selector */}
+            <div style={{ marginBottom: '24px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  color: '#6B1F2A',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                Select Size
+              </label>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '8px'
+                }}
+              >
+                {['S', 'M', 'L', 'XL'].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    style={{
+                      padding: '12px 8px',
+                      border: selectedSize === size ? '2px solid #6B1F2A' : '1px solid #F0C4CC',
+                      background: selectedSize === size ? '#6B1F2A' : 'transparent',
+                      color: selectedSize === size ? '#FFF8F8' : '#7A5560',
+                      fontFamily: "'Jost', sans-serif",
+                      fontSize: '0.9rem',
+                      fontWeight: selectedSize === size ? 600 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+                marginTop: '24px'
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowSizeModal(false);
+                  setSelectedSize('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  border: '1px solid #F0C4CC',
+                  color: '#7A5560',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLElement).style.background = '#F5E6E8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLElement).style.background = 'transparent';
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddToCart}
+                disabled={loading || !selectedSize}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: (!selectedSize || loading) ? '#F0C4CC' : '#6B1F2A',
+                  border: 'none',
+                  color: '#FFF8F8',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: (!selectedSize || loading) ? 'not-allowed' : 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedSize && !loading) {
+                    (e.target as HTMLElement).style.background = '#A0525E';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedSize && !loading) {
+                    (e.target as HTMLElement).style.background = '#6B1F2A';
+                  }
+                }}
+              >
+                {loading ? 'Adding...' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
