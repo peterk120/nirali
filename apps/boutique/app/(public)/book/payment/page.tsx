@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useBookingStore } from '../../../../lib/stores/bookingStore';
 import { BookingProgressBar } from '../../../../components/booking/BookingProgressBar';
 import { Button } from '../../../../components/ui/button';
-import { loadRazorpayScript, openRazorpayPayment } from '../../../../lib/razorpay';
+// import { loadRazorpayScript, openRazorpayPayment } from '../../../../lib/razorpay'; // Commented out - using simulation mode
 import { Calendar, PlusCircleIcon } from 'lucide-react';
 import { 
   SIMULATE_PAYMENT, 
   SIMULATED_SIGNATURE, 
   PAYMENT_DELAY_MS,
-  SUCCESS_MODAL_DELAY_MS,
+  // SUCCESS_MODAL_DELAY_MS,
   REDIRECT_DELAY_MS 
 } from '../../../../config/payment';
 
@@ -153,7 +153,10 @@ const PaymentPage = () => {
           })
         });
 
-        const checkoutResult = await checkoutRes.json();
+       const rawText = await checkoutRes.text();
+        console.log('🔴 Raw server response:', rawText);
+        const checkoutResult = JSON.parse(rawText);
+        console.log('❌ Checkout error details:', checkoutResult.details);
 
         if (!checkoutResult.success) {
           throw new Error(checkoutResult.error || 'Checkout failed');
@@ -174,56 +177,15 @@ const PaymentPage = () => {
         const { useAuthStore } = await import('../../../../lib/stores/authStore');
         useAuthStore.getState().fetchBookingsCount();
 
-        // Show success modal after configured delay
-        setTimeout(() => {
-          setShowSuccessModal(true);
-        }, SUCCESS_MODAL_DELAY_MS);
+        // Show success modal IMMEDIATELY (appears right after processing delay)
+        setShowSuccessModal(true);
         
-        // Redirect to bookings page
+        // Redirect to bookings page after modal countdown completes
+        // Total time from Pay Now click: ~9 seconds (1.5s delay + 8s modal countdown)
         setTimeout(() => {
           router.push('/dashboard/bookings');
         }, REDIRECT_DELAY_MS);
         
-      } else {
-        // ============================================
-        // PRODUCTION MODE: Real Razorpay Payment Flow
-        // ============================================
-        console.log('🔐 Production Mode: Processing real Razorpay payment...');
-        
-        // TODO: Uncomment when Razorpay is verified and ready for production
-        // const paymentOptions = {
-        //   key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        //   amount: totalPayable * 100, // Convert to paise
-        //   currency: "INR",
-        //   name: "Nirali Sai Boutique",
-        //   description: "Booking Payment",
-        //   order_id: await createRazorpayOrder(totalPayable),
-        //   handler: async (response) => {
-        //     // Real payment succeeded - call checkout API
-        //     const checkoutRes = await fetch('/api/checkout', {
-        //       method: 'POST',
-        //       headers: {
-        //         'Content-Type': 'application/json',
-        //         'Authorization': `Bearer ${localStorage.getItem('token')}`
-        //       },
-        //       body: JSON.stringify({
-        //         items: itemsToBook,
-        //         customerDetails: { ... },
-        //         paymentDetails: {
-        //           razorpayOrderId: response.razorpay_order_id,
-        //           razorpayPaymentId: response.razorpay_payment_id,
-        //           razorpaySignature: response.razorpay_signature
-        //         },
-        //         bookingPeriod: { ... }
-        //       })
-        //     });
-        //     // Handle response...
-        //   }
-        // };
-        // await openRazorpayPayment(paymentOptions);
-        
-        console.warn('⚠️ Razorpay not configured. Please set SIMULATE_PAYMENT=true in config/payment.ts for testing.');
-        alert('Real Razorpay payment flow will be activated once payment gateway is verified.\n\nFor now, please enable simulation mode in config/payment.ts');
       }
     } catch (err: any) {
       console.error('Payment error:', err);

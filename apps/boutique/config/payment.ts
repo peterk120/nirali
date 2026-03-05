@@ -14,8 +14,6 @@ export const SIMULATED_SIGNATURE = 'SIM_SIG_123456789';
 // Payment processing delay in milliseconds (simulates network latency)
 export const PAYMENT_DELAY_MS = 1500;
 
-// Success modal display duration before redirect (in milliseconds)
-export const SUCCESS_MODAL_DELAY_MS = 3000;
-
 // Auto-redirect to bookings page after success (in milliseconds)
-export const REDIRECT_DELAY_MS = 11000; // 3s delay + 8s countdown
+// This starts counting from when payment completes, includes 8s modal countdown
+export const REDIRECT_DELAY_MS = 9000; // 1.5s processing + 8s modal countdown
