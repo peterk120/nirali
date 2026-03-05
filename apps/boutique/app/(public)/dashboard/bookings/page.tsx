@@ -18,6 +18,7 @@ type BookingStatus = 'all' | 'upcoming' | 'active' | 'completed' | 'cancelled';
 
 interface Booking {
   id: string;
+  orderId: string; // MongoDB Order _id for API calls
   dress: {
     id: string;
     name: string;
@@ -30,6 +31,8 @@ interface Booking {
   amountPaid: number;
   depositStatus: 'held' | 'refunded' | 'refund_initiated';
   refundAmount?: number;
+  isReviewed?: boolean; // Whether user has reviewed this order
+  existingRating?: number; // User's existing rating (1-5)
 }
 
 const statusConfig = {
@@ -123,19 +126,22 @@ const MyBookingsPage = () => {
         if (result.success) {
           // Transform MongoDB documents to Booking interface
           const transformedBookings = result.data.map((order: any) => ({
-            id: order._id,
+            id: order.orderId, // Display orderId
+            orderId: order._id.toString(), // MongoDB _id for API calls
             dress: {
-              id: order.productId?._id || 'unknown',
-              name: order.productId?.name || 'Product',
-              category: order.productId?.category || 'Unknown',
-              image: order.productId?.image || '/default-product.jpg'
+              id: order.productId?.toString() || order.productId || 'unknown',
+              name: order.productName || 'Product',
+              category: order.category || 'Unknown',
+              image: order.productImage || '/placeholder-product.jpg'
             },
             startDate: new Date(order.rentalStartDate),
             endDate: new Date(order.rentalEndDate),
             status: mapOrderStatusToBookingStatus(order.status),
             amountPaid: order.totalAmount || 0,
             depositStatus: order.depositStatus || 'held',
-            refundAmount: order.refundAmount
+            refundAmount: order.refundAmount,
+            isReviewed: order.isReviewed || false,
+            existingRating: order.rating
           }));
 
           setBookings(transformedBookings);

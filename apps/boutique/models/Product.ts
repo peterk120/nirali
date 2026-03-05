@@ -18,6 +18,15 @@ export interface IProduct extends Document {
     description: string;
     keywords: string[];
   };
+  averageRating?: number; // Average of all ratings (0-5)
+  totalReviews?: number; // Total number of reviews
+  ratingDistribution?: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,6 +114,15 @@ const ProductSchema: Schema = new Schema({
     title: String,
     description: String,
     keywords: [String]
+  },
+  averageRating: { type: Number, default: 0, min: 0, max: 5 },
+  totalReviews: { type: Number, default: 0 },
+  ratingDistribution: {
+    5: { type: Number, default: 0 },
+    4: { type: Number, default: 0 },
+    3: { type: Number, default: 0 },
+    2: { type: Number, default: 0 },
+    1: { type: Number, default: 0 }
   }
 }, {
   timestamps: true

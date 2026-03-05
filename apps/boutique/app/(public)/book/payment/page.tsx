@@ -43,6 +43,7 @@ const PaymentPage = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [countdown, setCountdown] = useState(8);
+  const [exactTotalPaid, setExactTotalPaid] = useState<number>(0); // Store actual total from API
 
   const jewelleryOptions = [
     { id: 'j1', name: 'Traditional Necklace Set', price: 800 },
@@ -164,6 +165,11 @@ const PaymentPage = () => {
 
         console.log('✅ Orders created:', checkoutResult.orders);
 
+        // Calculate exact total paid from checkout response
+        // The API returns order IDs, so we use our calculated totalPayable which was sent
+        const actualTotalPaid = totalPayable; // This is what was charged
+        setExactTotalPaid(actualTotalPaid);
+
         // Success - update state
         setAdvancePaid(advanceAmount);
         setDepositPaid(depositAmount);
@@ -208,9 +214,9 @@ const PaymentPage = () => {
 
   const modalDetails = [
     { label: 'Booking ID', value: bookingId || '', mono: true },
-    { label: 'Dress', value: selectedDress?.name || 'N/A' },
+    { label: 'Dress', value: itemsToBook[0]?.name || selectedDress?.name || 'N/A' },
     { label: 'Rental Period', value: `${selectedDate ? formatDate(selectedDate.toString()) : 'N/A'} – ${returnDate ? formatDate(returnDate.toString()) : 'N/A'}` },
-    { label: 'Amount Paid', value: `₹${totalPayable.toLocaleString()}` },
+    { label: 'Amount Paid', value: `₹${exactTotalPaid > 0 ? exactTotalPaid.toLocaleString() : totalPayable.toLocaleString()}` },
     { label: 'Status', value: 'Confirmed', highlight: true },
   ];
 

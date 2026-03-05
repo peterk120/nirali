@@ -20,6 +20,9 @@ export interface IOrder extends Document {
   deliveryAddress: string;
   specialRequests: string;
   bookingDate: Date;
+  rating?: number; // User's rating for this product (1-5)
+  review?: string; // User's written review
+  isReviewed: boolean; // Whether user has submitted a review
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,7 +46,10 @@ const OrderSchema: Schema = new Schema({
   customerPhone: String,
   deliveryAddress: String,
   specialRequests: { type: String, default: '' },
-  bookingDate: { type: Date, default: Date.now }
+  bookingDate: { type: Date, default: Date.now },
+  rating: { type: Number, min: 1, max: 5 },
+  review: { type: String, maxlength: 500 },
+  isReviewed: { type: Boolean, default: false }
 }, {
   timestamps: true
 });
