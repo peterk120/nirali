@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IOrder extends Document {
   orderId: string;
   userId: string;
-  productId: string;
+  productId: mongoose.Types.ObjectId; // Changed to ObjectId reference
   productName: string;
   productImage: string;
   rentalStartDate: Date;
@@ -27,7 +27,7 @@ export interface IOrder extends Document {
 const OrderSchema: Schema = new Schema({
   orderId: String,
   userId: String,
-  productId: String,
+  productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true }, // Changed to ObjectId reference
   productName: String,
   productImage: String,
   rentalStartDate: Date,

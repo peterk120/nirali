@@ -22,6 +22,7 @@ interface CartStore {
     removeItem: (productId: string) => Promise<void>;
     getCartCount: () => number;
     clearCart: () => void;
+    mergeGuestCart: () => Promise<void>; // New method to merge guest cart on login
 }
 
 export const useCartStore = create<CartStore>()(
@@ -67,10 +68,28 @@ export const useCartStore = create<CartStore>()(
 
             addItem: async (item) => {
                 const token = localStorage.getItem('token');
-                if (!token) return;
+
+                // Guest cart handling - store locally until login
+                if (!token) {
+                    console.warn('Guest cart addition: Item added to local store.');
+                    const currentItems = get().items;
+                    const existingIndex = currentItems.findIndex(i => i.productId === item.productId);
+
+                    if (existingIndex > -1) {
+                        currentItems[existingIndex].quantity += (item.quantity || 1);
+                        // Cap at 10 items
+                        if (currentItems[existingIndex].quantity > 10) {
+                            currentItems[existingIndex].quantity = 10;
+                        }
+                        set({ items: [...currentItems] });
+                    } else {
+                        set({ items: [...currentItems, { ...item, quantity: item.quantity || 1 }] });
+                    }
+                    return;
+                }
 
                 try {
-                    await fetch('/api/cart', {
+                    const response = await fetch('/api/cart', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -83,9 +102,24 @@ export const useCartStore = create<CartStore>()(
                             size: item.size
                         })
                     });
+
+                    if (!response.ok) throw new Error('Failed to add to backend cart');
+
+                    // Immediately refresh cart to sync with backend
                     await get().fetchCart();
                 } catch (e) {
                     console.error('Failed to add to cart', e);
+                    // Fallback: Update local state even if API fails
+                    const currentItems = get().items;
+                    const existingIndex = currentItems.findIndex(i => i.productId === item.productId);
+                    if (existingIndex > -1) {
+                        currentItems[existingIndex].quantity += (item.quantity || 1);
+                        if (currentItems[existingIndex].quantity > 10) {
+                            currentItems[existingIndex].quantity = 10;
+                        }
+                    } else {
+                        set({ items: [...currentItems, { ...item, quantity: item.quantity || 1 }] });
+                    }
                 }
             },
 
@@ -109,6 +143,41 @@ export const useCartStore = create<CartStore>()(
             },
 
             clearCart: () => set({ items: [] }),
+
+            mergeGuestCart: async () => {
+                // Merge guest cart items into authenticated cart on login
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const guestItems = get().items;
+                if (guestItems.length === 0) return;
+
+                try {
+                    // Add each guest item to the backend cart
+                    for (const item of guestItems) {
+                        await fetch('/api/cart', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                productId: item.productId,
+                                quantity: item.quantity,
+                                rentalDays: item.rentalDays,
+                                size: item.size
+                            })
+                        });
+                    }
+
+                    // Clear local guest cart and fetch from backend
+                    set({ items: [] });
+                    await get().fetchCart();
+                    console.log('Guest cart merged successfully');
+                } catch (e) {
+                    console.error('Failed to merge guest cart', e);
+                }
+            },
         }),
         {
             name: 'cart-storage',

@@ -52,6 +52,26 @@ const PaymentPage = () => {
   // Calculate total price based on all booking items or the single selected dress
   const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
 
+  // Validate dates before allowing payment
+  useEffect(() => {
+    if (!selectedDate || !returnDate) return;
+    
+    const startDate = new Date(selectedDate);
+    const endDate = new Date(returnDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+    
+    if (startDate < today) {
+      alert('Rental start date cannot be in the past');
+      router.push('/book/date');
+    } else if (endDate <= startDate) {
+      alert('Return date must be after start date');
+      router.push('/book/date');
+    }
+  }, [selectedDate, returnDate, router]);
+
   const itemsTotal = itemsToBook.reduce((total, item) => {
     const price = item.rentalPricePerDay || item.price || 0;
     const qty = item.quantity || 1;
@@ -83,119 +103,72 @@ const PaymentPage = () => {
 
   const handleRazorpayPayment = async () => {
     setIsProcessing(true);
-    setIsLoadingRazorpay(true);
 
-    try {
-      await loadRazorpayScript();
+    // SIMULATED PAYMENT SUCCESS (as requested by user)
+    // In production, this would be replaced by the Razorpay integration
+    setTimeout(async () => {
+      try {
+        console.log('Simulating successful payment verification...');
 
-      const response = await fetch('/api/payments/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: totalPayable,
-          currency: 'INR',
-          receipt: `ORDER_${Date.now()}`,
-          notes: {
-            bookingCount: itemsToBook.length.toString(),
-            userEmail: userProfile?.email || 'guest',
-          }
-        })
-      });
+        // Call the consolidated checkout API with dummy payment data
+        const checkoutRes = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            items: itemsToBook,
+            customerDetails: {
+              name: userProfile?.name || 'Customer',
+              email: userProfile?.email || 'customer@example.com',
+              phone: userProfile?.phone || '9999999999',
+              address: userProfile?.address || 'Default Address'
+            },
+            paymentDetails: {
+              // Dummy data for simulation - bypassed verification on backend for simulation purposes 
+              // OR we can make backend accept "SIMULATED_SUCCESS" if in dev mode
+              razorpayOrderId: `SIM_ORD_${Date.now()}`,
+              razorpayPaymentId: `SIM_PAY_${Date.now()}`,
+              razorpaySignature: 'SIM_SIG_123456789'
+            },
+            bookingPeriod: {
+              startDate: selectedDate,
+              endDate: returnDate,
+              days: rentalDuration || 3
+            },
+            globalSpecialInstructions: specialInstructions || ''
+          })
+        });
 
-      if (!response.ok) throw new Error('Failed to create payment order');
+        const checkoutResult = await checkoutRes.json();
 
-      const { order } = await response.json();
+        if (checkoutResult.success) {
+          setAdvancePaid(advanceAmount);
+          setDepositPaid(depositAmount);
+          setBookingId(checkoutResult.orders[0] || 'Confirmed');
+          setPaymentCompleted(true);
 
-      const options = {
-        key: 'rzp_test_SKM0b29EDWHcE1', // Should ideally be process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Nirali Boutique',
-        description: `Booking ${itemsToBook.length} item(s)`,
-        order_id: order.id,
-        handler: async (paymentRes: any) => {
-          console.log('Payment successful, verifying...', paymentRes);
+          // Update global store counts
+          const { useCartStore } = await import('../../../../lib/stores/cartStore');
+          useCartStore.getState().fetchCart();
+          const { useAuthStore } = await import('../../../../lib/stores/authStore');
+          useAuthStore.getState().fetchBookingsCount();
 
-          try {
-            // Call the consolidated checkout API
-            const checkoutRes = await fetch('/api/checkout', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              },
-              body: JSON.stringify({
-                items: itemsToBook,
-                customerDetails: {
-                  name: userProfile?.name,
-                  email: userProfile?.email,
-                  phone: userProfile?.phone,
-                  address: userProfile?.address
-                },
-                paymentDetails: {
-                  razorpayOrderId: paymentRes.razorpay_order_id,
-                  razorpayPaymentId: paymentRes.razorpay_payment_id,
-                  razorpaySignature: paymentRes.razorpay_signature
-                },
-                bookingPeriod: {
-                  startDate: selectedDate,
-                  endDate: returnDate,
-                  days: rentalDuration
-                },
-                globalSpecialInstructions: specialInstructions
-              })
-            });
-
-            const checkoutResult = await checkoutRes.json();
-
-            if (checkoutResult.success) {
-              setAdvancePaid(advanceAmount);
-              setDepositPaid(depositAmount);
-              setBookingId(checkoutResult.orders[0] || 'Confirmed');
-              setPaymentCompleted(true);
-
-              // Update global store counts
-              const { useCartStore } = await import('../../../../lib/stores/cartStore');
-              useCartStore.getState().fetchCart();
-              const { useAuthStore } = await import('../../../../lib/stores/authStore');
-              useAuthStore.getState().fetchBookingsCount();
-
-              setShowSuccessModal(true);
-              setTimeout(() => {
-                router.push('/dashboard/bookings');
-              }, 8000);
-            } else {
-              throw new Error(checkoutResult.error || 'Checkout failed');
-            }
-          } catch (err: any) {
-            console.error('Final checkout error:', err);
-            alert('Payment was successful but we encountered an error setting up your booking. Please contact support immediately.');
-          } finally {
-            setIsProcessing(false);
-          }
-        },
-        prefill: {
-          name: userProfile?.name || '',
-          email: userProfile?.email || '',
-          contact: userProfile?.phone || '',
-        },
-        theme: { color: '#6B1F2A' },
-        modal: {
-          ondismiss: () => {
-            setIsProcessing(false);
-            setIsLoadingRazorpay(false);
-          }
+          setShowSuccessModal(true);
+          setTimeout(() => {
+            router.push('/dashboard/bookings');
+          }, 8000);
+        } else {
+          throw new Error(checkoutResult.error || 'Checkout failed');
         }
-      };
-
-      await openRazorpayPayment(options);
-    } catch (error) {
-      console.error('Payment error:', error);
-      alert(error instanceof Error ? error.message : 'Payment failed. Please try again.');
-    } finally {
-      setIsProcessing(false);
-      setIsLoadingRazorpay(false);
-    }
+      } catch (err: any) {
+        console.error('Simulated checkout error:', err);
+        alert(err.message || 'Payment simulated successfully but encounterd an error creating your booking.');
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 1500); // Small realistic delay
   };
 
   const handleBack = () => {

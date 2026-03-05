@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  Heart, 
-  Share2, 
-  Star, 
-  Truck, 
-  Shield, 
+import {
+  Heart,
+  Share2,
+  Star,
+  Truck,
+  Shield,
   RotateCcw,
   ShoppingCart,
   Calendar,
@@ -42,7 +42,7 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
         console.error('Error checking wishlist:', error);
       }
     };
-    
+
     checkWishlist();
   }, [product]);
 
@@ -50,7 +50,7 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
     try {
       const newWishlistedState = !isWishlisted;
       setIsWishlisted(newWishlistedState);
-      
+
       // Update localStorage
       try {
         const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
@@ -98,7 +98,17 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
   const handleAddToCart = async () => {
     setLoading(true);
     try {
-      // Add to cart logic here
+      const { useCartStore } = await import('../../../../../lib/stores/cartStore');
+      await useCartStore.getState().addItem({
+        productId: product._id || product.id,
+        quantity: quantity,
+        rentalDays: parseInt(searchParams.days as string) || 3,
+        size: product.size || 'Medium',
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category
+      });
       showSuccess('Added to cart');
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -122,7 +132,7 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           className="bg-white rounded-2xl shadow-lg overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -141,14 +151,13 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
                   }}
                 />
               </div>
-              
+
               {/* Thumbnails */}
               {product.image && (
                 <div className="flex gap-2">
                   <button
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${
-                      selectedImage === 0 ? 'border-brand-rose' : 'border-gray-200'
-                    }`}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedImage === 0 ? 'border-brand-rose' : 'border-gray-200'
+                      }`}
                     onClick={() => setSelectedImage(0)}
                   >
                     <img
@@ -183,9 +192,8 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${
-                        i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                      }`}
+                      className={`w-5 h-5 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`}
                     />
                   ))}
                 </div>
@@ -209,7 +217,7 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
                 <div>
                   <h3 className="font-medium text-gray-900 mb-2">Color</h3>
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-6 h-6 rounded-full border-2 border-gray-300"
                       style={{ backgroundColor: product.color }}
                     />
@@ -244,11 +252,10 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  className={`flex-1 ${
-                    isWishlisted 
-                      ? 'bg-red-50 border-red-200 text-red-600' 
+                  className={`flex-1 ${isWishlisted
+                      ? 'bg-red-50 border-red-200 text-red-600'
                       : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+                    }`}
                   onClick={handleWishlist}
                 >
                   <Heart className={`w-5 h-5 mr-2 ${isWishlisted ? 'fill-current' : ''}`} />
@@ -292,7 +299,7 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
         </motion.div>
 
         {/* Additional Info Section */}
-        <motion.div 
+        <motion.div
           className="mt-8 bg-white rounded-2xl shadow-lg p-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

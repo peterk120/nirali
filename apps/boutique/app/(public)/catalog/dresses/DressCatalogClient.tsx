@@ -738,35 +738,19 @@ function LuxuryDressCard({
             </button>
             <button
               className="list-cta cart-btn"
-              onClick={e => { 
-                e.stopPropagation(); 
-                // Add to cart functionality
-                const cartItem = {
-                  id: dress.id,
+              onClick={async (e) => {
+                e.stopPropagation();
+                const { useCartStore } = await import('../../../../lib/stores/cartStore');
+                await useCartStore.getState().addItem({
+                  productId: dress.id,
+                  quantity: 1,
+                  rentalDays: 3,
+                  size: dress.size || 'Medium',
                   name: dress.name,
                   price: dress.price,
                   image: dress.image,
-                  quantity: 1
-                };
-                            
-                // Get existing cart from localStorage
-                const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-                            
-                // Check if item already exists
-                const existingItemIndex = existingCart.findIndex((item: any) => item.id === cartItem.id);
-                            
-                if (existingItemIndex > -1) {
-                  // Update quantity if item exists
-                  existingCart[existingItemIndex].quantity += 1;
-                } else {
-                  // Add new item
-                  existingCart.push(cartItem);
-                }
-                            
-                // Save back to localStorage
-                localStorage.setItem('cart', JSON.stringify(existingCart));
-                            
-                // Show success message using a toast notification
+                  category: dress.category
+                });
                 showAddedToCart(dress.name);
               }}
             >
@@ -803,35 +787,19 @@ function LuxuryDressCard({
             </button>
             <button
               className="card-overlay-btn cart-btn"
-              onClick={e => { 
-                e.stopPropagation(); 
-                // Add to cart functionality
-                const cartItem = {
-                  id: dress.id,
+              onClick={async (e) => {
+                e.stopPropagation();
+                const { useCartStore } = await import('../../../../lib/stores/cartStore');
+                await useCartStore.getState().addItem({
+                  productId: dress.id,
+                  quantity: 1,
+                  rentalDays: 3,
+                  size: dress.size || 'Medium',
                   name: dress.name,
                   price: dress.price,
                   image: dress.image,
-                  quantity: 1
-                };
-                            
-                // Get existing cart from localStorage
-                const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-                            
-                // Check if item already exists
-                const existingItemIndex = existingCart.findIndex((item: any) => item.id === cartItem.id);
-                            
-                if (existingItemIndex > -1) {
-                  // Update quantity if item exists
-                  existingCart[existingItemIndex].quantity += 1;
-                } else {
-                  // Add new item
-                  existingCart.push(cartItem);
-                }
-                            
-                // Save back to localStorage
-                localStorage.setItem('cart', JSON.stringify(existingCart));
-                            
-                // Show success message using a toast notification
+                  category: dress.category
+                });
                 showAddedToCart(dress.name);
               }}
             >
@@ -882,12 +850,12 @@ const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams })
     return Array.isArray(v) ? v[0] : v;
   };
   const category = getParam('category');
-  const color    = getParam('color');
-  const size     = getParam('size');
+  const color = getParam('color');
+  const size = getParam('size');
   const priceMin = getParam('priceMin');
   const priceMax = getParam('priceMax');
-  const sort     = getParam('sort') || 'popular';
-  const page     = parseInt(getParam('page') || '1');
+  const sort = getParam('sort') || 'popular';
+  const page = parseInt(getParam('page') || '1');
 
   // ─── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -896,11 +864,11 @@ const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams })
       try {
         const params = new URLSearchParams();
         if (category) params.append('category', category);
-        if (color)    params.append('color', color);
-        if (size)     params.append('size', size);
+        if (color) params.append('color', color);
+        if (size) params.append('size', size);
         if (priceMin) params.append('priceMin', priceMin);
         if (priceMax) params.append('priceMax', priceMax);
-        if (sort)     params.append('sort', sort);
+        if (sort) params.append('sort', sort);
         params.append('page', String(page));
 
         const response = await fetch(`/api/products?${params.toString()}`);
@@ -981,11 +949,11 @@ const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams })
 
   // ─── Active filters ──────────────────────────────────────────────────────────
   const activeFilters = [
-    category ? { name: 'category', label: category }            : null,
-    color    ? { name: 'color',    label: color }               : null,
-    size     ? { name: 'size',     label: `Size ${size}` }      : null,
+    category ? { name: 'category', label: category } : null,
+    color ? { name: 'color', label: color } : null,
+    size ? { name: 'size', label: `Size ${size}` } : null,
     priceMin ? { name: 'priceMin', label: `From ₹${priceMin}` } : null,
-    priceMax ? { name: 'priceMax', label: `To ₹${priceMax}` }   : null,
+    priceMax ? { name: 'priceMax', label: `To ₹${priceMax}` } : null,
   ].filter(Boolean) as { name: string; label: string }[];
 
   const cardDresses = dresses.map(transformDressToCardProps);

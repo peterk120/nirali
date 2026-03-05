@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/lib/auth';
+import { rateLimiters } from '@/lib/rateLimiter';
 
 export async function POST(request: Request) {
     try {
@@ -10,6 +11,17 @@ export async function POST(request: Request) {
 
         if (!email || !password) {
             return NextResponse.json({ success: false, error: 'Email and password are required' }, { status: 400 });
+        }
+
+        // Rate limiting - use IP or email as identifier
+        const clientIP = request.headers.get('x-forwarded-for') || 'unknown';
+        const rateLimitResult = rateLimiters.login(`${clientIP}-${email}`);
+        
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { success: false, error: rateLimitResult.message, retryAfter: rateLimitResult.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
+            );
         }
 
         await connectToDatabase();

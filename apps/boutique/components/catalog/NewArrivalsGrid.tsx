@@ -7,10 +7,13 @@ import type { Product } from '@nirali-sai/types';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, Calendar } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useCartStore } from '@/lib/stores/cartStore';
+import { showAddedToCart } from '@/lib/toast';
 
 export default function NewArrivalsGrid() {
   const router = useRouter();
   const { isLoggedIn } = useAuthStore();
+  const addItem = useCartStore((state) => state.addItem);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +47,12 @@ export default function NewArrivalsGrid() {
             }
           }
 
-          setProducts(uniqueProducts.slice(0, 4));
+          // Only set products if we have data, otherwise use fallback
+          if (uniqueProducts.length > 0) {
+            setProducts(uniqueProducts.slice(0, 4));
+          } else {
+            throw new Error('No products available');
+          }
         } else {
           console.error('Failed to fetch new arrivals:', response.error?.message);
           // Fallback to sample products with real images
@@ -724,10 +732,27 @@ export default function NewArrivalsGrid() {
                     onMouseLeave={(e) => {
                       (e.target as HTMLElement).style.background = 'transparent';
                     }}
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      // Simple alert placeholder for Add to Cart
-                      alert(`Added ${product.name} to cart!`);
+                      
+                      if (!isLoggedIn) {
+                        router.push('/login');
+                        return;
+                      }
+
+                      // Add to cart using cart store
+                      await addItem({
+                        productId: product.id || product._id,
+                        quantity: 1,
+                        rentalDays: 4,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image,
+                        category: product.category
+                      });
+
+                      // Show toast notification
+                      showAddedToCart(product.name);
                     }}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />

@@ -30,6 +30,12 @@ export const useAuthStore = create<AuthState>()(
             login: (userData) => {
                 set({ isLoggedIn: true, user: userData });
                 get().fetchBookingsCount(); // Fetch counts on login
+                
+                // Merge guest cart if user was browsing as guest
+                setTimeout(async () => {
+                    const { useCartStore } = await import('./cartStore');
+                    await useCartStore.getState().mergeGuestCart();
+                }, 0);
             },
             logout: () => {
                 localStorage.removeItem('token');
