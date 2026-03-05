@@ -79,7 +79,7 @@ export default function Navbar() {
 
   const { isLoggedIn, user, bookingsCount, logout, fetchBookingsCount } = useAuthStore();
   const { items: wishlistItems } = useWishlistStore();
-  const { items: cartItems, fetchCart } = useCartStore();
+  const { items: cartItems, fetchCart, getCartCount } = useCartStore();
 
   const pathname = usePathname();
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -98,6 +98,12 @@ export default function Navbar() {
       fetchBookingsCount();
     }
   }, [isLoggedIn, user?.email, fetchCart, fetchBookingsCount]);
+
+  // Force re-render when cart items change (for immediate badge update)
+  useEffect(() => {
+    const cartCount = getCartCount();
+    console.log(`🛒 Cart badge updated: ${cartCount} items`);
+  }, [cartItems, getCartCount]);
 
   // Removed local sync effect as it's now handled by the effect above or store actions directly
 

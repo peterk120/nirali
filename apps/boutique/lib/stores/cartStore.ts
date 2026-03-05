@@ -76,15 +76,18 @@ export const useCartStore = create<CartStore>()(
                     const existingIndex = currentItems.findIndex(i => i.productId === item.productId);
 
                     if (existingIndex > -1) {
-                        currentItems[existingIndex].quantity += (item.quantity || 1);
-                        // Cap at 10 items
-                        if (currentItems[existingIndex].quantity > 10) {
-                            currentItems[existingIndex].quantity = 10;
-                        }
-                        set({ items: [...currentItems] });
+                        const updatedItems = [...currentItems];
+                        updatedItems[existingIndex].quantity = Math.min(
+                            updatedItems[existingIndex].quantity + (item.quantity || 1),
+                            10
+                        );
+                        set({ items: updatedItems });
                     } else {
                         set({ items: [...currentItems, { ...item, quantity: item.quantity || 1 }] });
                     }
+                    
+                    // Force re-render by triggering a state update
+                    setTimeout(() => set({ items: [...get().items] }), 0);
                     return;
                 }
 
@@ -107,19 +110,27 @@ export const useCartStore = create<CartStore>()(
 
                     // Immediately refresh cart to sync with backend
                     await get().fetchCart();
+                    
+                    // Small delay to ensure UI updates
+                    setTimeout(() => set({ items: [...get().items] }), 100);
                 } catch (e) {
                     console.error('Failed to add to cart', e);
                     // Fallback: Update local state even if API fails
                     const currentItems = get().items;
                     const existingIndex = currentItems.findIndex(i => i.productId === item.productId);
                     if (existingIndex > -1) {
-                        currentItems[existingIndex].quantity += (item.quantity || 1);
-                        if (currentItems[existingIndex].quantity > 10) {
-                            currentItems[existingIndex].quantity = 10;
-                        }
+                        const updatedItems = [...currentItems];
+                        updatedItems[existingIndex].quantity = Math.min(
+                            updatedItems[existingIndex].quantity + (item.quantity || 1),
+                            10
+                        );
+                        set({ items: updatedItems });
                     } else {
                         set({ items: [...currentItems, { ...item, quantity: item.quantity || 1 }] });
                     }
+                    
+                    // Force re-render
+                    setTimeout(() => set({ items: [...get().items] }), 0);
                 }
             },
 

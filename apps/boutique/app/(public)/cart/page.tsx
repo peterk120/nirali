@@ -31,8 +31,14 @@ const CartPage = () => {
   const { items, isLoading, fetchCart, removeItem: removeFromStore } = useCartStore();
   const { addItem: addToWishlist, isInWishlist } = useWishlistStore();
 
+  // Fetch cart on mount and whenever component becomes active
   useEffect(() => {
     fetchCart();
+    
+    // Also fetch when returning to this page from another page
+    const handleFocus = () => fetchCart();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [fetchCart]);
 
   const cartItems: CartItem[] = items.map(item => ({
