@@ -1120,7 +1120,7 @@ const MyBookingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Your Rating *
               </label>
-              <div className="flex justify-center">
+              <div className="flex justify-center py-4">
                 <StarRating
                   rating={userRating}
                   onRate={setUserRating}
@@ -1128,9 +1128,13 @@ const MyBookingsPage = () => {
                   size="lg"
                 />
               </div>
-              {userRating > 0 && (
+              {userRating > 0 ? (
                 <p className="text-center text-sm text-brand-rose mt-2">
                   You selected {userRating} out of 5 stars
+                </p>
+              ) : (
+                <p className="text-center text-sm text-gray-500 mt-2">
+                  Click on the stars to rate
                 </p>
               )}
             </div>

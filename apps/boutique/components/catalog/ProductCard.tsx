@@ -17,6 +17,8 @@ interface Product {
   status: string;
   color?: string;
   size?: string;
+  averageRating?: number;
+  totalReviews?: number;
 }
 
 interface ProductCardProps {
@@ -109,13 +111,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
         }} title={product.name}>
           {product.name}
         </h3>
-
+      
+        {/* Rating Stars */}
+        {product.averageRating && product.totalReviews > 0 && (
+          <div className="flex items-center gap-1 mt-2">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-3 h-3 ${
+                    star <= Math.round(product.averageRating!)
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'fill-gray-200 text-gray-200'
+                  }`}
+                  strokeWidth={2}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-gray-600">
+              ({product.totalReviews})
+            </span>
+          </div>
+        )}
+      
         {/* Price */}
         <div className="mt-2">
           <p className="text-brand-rose font-medium">₹{product.price.toLocaleString()}</p>
           <p className="text-xs text-gray-500 mt-1">Stock: {product.stock}</p>
         </div>
-
+      
         {/* View Details button */}
         <Button
           className="w-full mt-4 bg-brand-rose hover:bg-brand-rose/90 py-2"
