@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectToDatabase from '../../../lib/mongodb';
-import Product from '../../../models/Product';
-import Review from '../../../models/Review';
+import connectToDatabase from '../../../../lib/mongodb';
+import Product from '../../../../models/Product';
+import Review from '../../../../models/Review';
 import mongoose from 'mongoose';
 
 // GET /api/products/[id]/ratings
