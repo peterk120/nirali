@@ -98,6 +98,7 @@ const MyBookingsPage = () => {
   const [userRating, setUserRating] = useState<number>(0);
   const [userReviewText, setUserReviewText] = useState<string>('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // Track which action is loading
 
   // Fetch current user and bookings on mount
   React.useEffect(() => {
@@ -226,17 +227,45 @@ const MyBookingsPage = () => {
   };
 
   const handleLeaveReview = (id: string, rating?: number) => {
-    const booking = bookings.find(b => b.orderId === id);
-    if (!booking) return;
+    console.log('🔍 Leave Review function called');
+    console.log('Booking ID:', id);
+    console.log('Rating parameter:', rating);
+    
+    // Set loading state
+    setActionLoading(`review-${id}`);
+    
+    // Small delay to show loading animation
+    setTimeout(() => {
+      const booking = bookings.find(b => b.orderId === id);
+      
+      console.log('Found booking:', booking ? booking.dress.name : 'NOT FOUND');
+      
+      if (!booking) {
+        console.error('❌ Booking not found for ID:', id);
+        alert('Error: Booking not found');
+        setActionLoading(null);
+        return;
+      }
 
-    if (rating) {
-      // User clicked stars directly - submit rating immediately
-      submitReview(booking.orderId, rating, '');
-    } else {
-      // Open modal for full review
-      setSelectedBookingForReview(booking);
-      setShowReviewModal(true);
-    }
+      console.log('✅ Leave Review clicked for booking:', booking.dress.name, '| Status:', booking.status, '| IsReviewed:', booking.isReviewed);
+      
+      if (rating) {
+        // User clicked stars directly - submit rating immediately
+        console.log('⭐ Direct star rating:', rating);
+        submitReview(booking.orderId, rating, '');
+      } else {
+        // Open modal for full review
+        console.log('📝 Opening modal...');
+        setSelectedBookingForReview(booking);
+        setShowReviewModal(true);
+        setUserRating(0); // Reset rating
+        setUserReviewText(''); // Reset review text
+        console.log('✅ Modal state set. showReviewModal=true, selectedBooking:', booking.dress.name);
+      }
+      
+      // Clear loading state
+      setActionLoading(null);
+    }, 300);
   };
 
   const handleBookAgain = (id: string) => {
@@ -697,9 +726,31 @@ const MyBookingsPage = () => {
           cursor: pointer;
           transition: background 0.2s, transform 0.15s;
           white-space: nowrap;
+          position: relative;
         }
 
         .action-btn-primary:hover { background: #a83860; transform: translateY(-1px); }
+        
+        .action-btn-primary:disabled {
+          background: #d4a5b5;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        /* Loading spinner */
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+          display: inline-block;
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
 
         .action-btn-ghost {
           display: inline-flex;
@@ -893,7 +944,16 @@ const MyBookingsPage = () => {
             {/* List */}
             <div className="fade-up delay-3" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-              {filteredBookings.length === 0 ? (
+              {loading ? (
+                <div className="empty-state">
+                  <div className="empty-icon" style={{ animation: 'spin 1s linear infinite' }}>
+                    <Calendar size={28} strokeWidth={1.2} color="#C0436A" />
+                  </div>
+                  <h3 className="empty-title">Loading your <em>bookings</em></h3>
+                  <p className="empty-desc">Please wait while we fetch your booking details...</p>
+                  <div className="spinner" style={{ width: 24, height: 24, margin: '0 auto' }}></div>
+                </div>
+              ) : filteredBookings.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">{emptyIcons[activeTab]}</div>
                   <h3 className="empty-title">
@@ -1011,9 +1071,17 @@ const MyBookingsPage = () => {
                                     </span>
                                   </div>
                                 ) : (
-                                  <button className="action-btn-primary" onClick={() => handleLeaveReview(booking.id)}>
-                                    <Star size={12} strokeWidth={1.6} />
-                                    Leave Review
+                                  <button 
+                                    className="action-btn-primary" 
+                                    onClick={() => handleLeaveReview(booking.orderId)}
+                                    disabled={actionLoading === `review-${booking.orderId}`}
+                                  >
+                                    {actionLoading === `review-${booking.orderId}` ? (
+                                      <span className="spinner" />
+                                    ) : (
+                                      <Star size={12} strokeWidth={1.6} />
+                                    )}
+                                    {actionLoading === `review-${booking.orderId}` ? 'Opening...' : 'Leave Review'}
                                   </button>
                                 )}
                               </>
@@ -1030,9 +1098,17 @@ const MyBookingsPage = () => {
                                     </span>
                                   </div>
                                 ) : (
-                                  <button className="action-btn-primary" onClick={() => handleLeaveReview(booking.id)}>
-                                    <Star size={12} strokeWidth={1.6} />
-                                    Leave Review
+                                  <button 
+                                    className="action-btn-primary" 
+                                    onClick={() => handleLeaveReview(booking.orderId)}
+                                    disabled={actionLoading === `review-${booking.orderId}`}
+                                  >
+                                    {actionLoading === `review-${booking.orderId}` ? (
+                                      <span className="spinner" />
+                                    ) : (
+                                      <Star size={12} strokeWidth={1.6} />
+                                    )}
+                                    {actionLoading === `review-${booking.orderId}` ? 'Opening...' : 'Leave Review'}
                                   </button>
                                 )}
                                 <button className="action-btn-ghost" onClick={() => handleBookAgain(booking.id)}>
@@ -1078,14 +1154,21 @@ const MyBookingsPage = () => {
 
       {/* Review Modal */}
       {showReviewModal && selectedBookingForReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999] p-4"
+          style={{ backdropFilter: 'blur(2px)' }}
+        >
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Close button */}
             <button
               onClick={() => setShowReviewModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100"
+              aria-label="Close modal"
             >
-              ✕
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
 
             {/* Header */}
@@ -1161,12 +1244,13 @@ const MyBookingsPage = () => {
             <button
               onClick={() => submitReview(selectedBookingForReview.orderId, userRating, userReviewText)}
               disabled={userRating === 0 || submittingReview}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                 userRating === 0 || submittingReview
                   ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-brand-rose hover:bg-brand-rose/90 text-white'
               }`}
             >
+              {submittingReview && <span className="spinner" />}
               {submittingReview ? 'Submitting...' : `Submit ${userRating > 0 ? `${userRating}-Star` : ''} Review`}
             </button>
 
