@@ -997,20 +997,44 @@ const MyBookingsPage = () => {
                               </>
                             )}
 
-                            {/* ACTIVE: view refund status (deposit info) */}
+                            {/* ACTIVE: view refund status + leave review */}
                             {booking.status === 'active' && (
-                              <button className="action-btn-ghost" onClick={() => handleViewRefundStatus(booking.id)}>
-                                Deposit Info
-                              </button>
+                              <>
+                                <button className="action-btn-ghost" onClick={() => handleViewRefundStatus(booking.id)}>
+                                  Deposit Info
+                                </button>
+                                {booking.isReviewed ? (
+                                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                                    <Star size={16} strokeWidth={1.6} className="fill-yellow-400 text-yellow-400" />
+                                    <span className="text-sm font-medium text-gray-700">
+                                      Rated {booking.existingRating}/5
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <button className="action-btn-primary" onClick={() => handleLeaveReview(booking.id)}>
+                                    <Star size={12} strokeWidth={1.6} />
+                                    Leave Review
+                                  </button>
+                                )}
+                              </>
                             )}
 
                             {/* COMPLETED: leave review + book again */}
                             {booking.status === 'completed' && (
                               <>
-                                <button className="action-btn-primary" onClick={() => handleLeaveReview(booking.id)}>
-                                  <Star size={12} strokeWidth={1.6} />
-                                  Leave a Review
-                                </button>
+                                {booking.isReviewed ? (
+                                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                                    <Star size={16} strokeWidth={1.6} className="fill-yellow-400 text-yellow-400" />
+                                    <span className="text-sm font-medium text-gray-700">
+                                      Rated {booking.existingRating}/5
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <button className="action-btn-primary" onClick={() => handleLeaveReview(booking.id)}>
+                                    <Star size={12} strokeWidth={1.6} />
+                                    Leave Review
+                                  </button>
+                                )}
                                 <button className="action-btn-ghost" onClick={() => handleBookAgain(booking.id)}>
                                   Book Again
                                 </button>
