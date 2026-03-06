@@ -541,7 +541,12 @@ export default function AdminOrdersPage() {
         setIsAuthenticated(true);
         setAuthLoading(false);
         try {
-          const res = await fetch('/api/orders');
+          const token = localStorage.getItem('token');
+          const res = await fetch('/api/orders', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
           const result = await res.json();
           if (result.success) {
             setOrders(result.data.map((o: any) => ({
