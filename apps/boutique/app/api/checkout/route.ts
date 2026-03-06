@@ -35,11 +35,24 @@ export async function POST(request: NextRequest) {
         // 1. Authenticate User
         const authHeader = request.headers.get('authorization');
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized - Missing authorization header' }, { status: 401 });
         }
         const token = authHeader.split(' ')[1];
-        const payload = await verifyToken(token);
-        if (!payload) return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+        
+        let payload;
+        try {
+            payload = await verifyToken(token);
+        } catch (tokenError: any) {
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Unauthorized - Invalid token',
+                details: tokenError.message 
+            }, { status: 401 });
+        }
+        
+        if (!payload) {
+            return NextResponse.json({ success: false, error: 'Invalid token payload' }, { status: 401 });
+        }
 
         const body = await request.json();
         const { items, customerDetails, paymentDetails, bookingPeriod } = body;
@@ -49,17 +62,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'No items in checkout' }, { status: 400 });
         }
 
-        // Validate customer details
+        // Validate customer details - make them required
         if (!customerDetails) {
             return NextResponse.json({ success: false, error: 'Customer details are required' }, { status: 400 });
         }
 
-        // Email validation
+        // Email validation - require valid email
         if (!customerDetails.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) {
             return NextResponse.json({ success: false, error: 'Valid email is required' }, { status: 400 });
         }
 
-        // Phone validation (Indian format - 10 digits)
+        // Phone validation (Indian format - 10 digits) - make required
         if (!customerDetails.phone || !/^[6-9]\d{9}$/.test(customerDetails.phone.replace(/[\s-]/g, ''))) {
             return NextResponse.json({ 
                 success: false, 
@@ -67,7 +80,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Name validation
+        // Name validation - make required
         if (!customerDetails.name || customerDetails.name.trim().length < 2 || customerDetails.name.length > 100) {
             return NextResponse.json({ 
                 success: false, 
@@ -75,7 +88,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Address validation
+        // Address validation - make required
         if (!customerDetails.address || customerDetails.address.trim().length < 10 || customerDetails.address.length > 500) {
             return NextResponse.json({ 
                 success: false, 
@@ -88,7 +101,7 @@ export async function POST(request: NextRequest) {
         customerDetails.address = customerDetails.address.trim();
         customerDetails.phone = customerDetails.phone.replace(/[\s-]/g, '');
 
-        // Validate booking period
+        // Validate booking period - make required
         if (!bookingPeriod || !bookingPeriod.startDate || !bookingPeriod.endDate) {
             return NextResponse.json({ success: false, error: 'Booking period is required' }, { status: 400 });
         }
@@ -231,11 +244,12 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
         await session.abortTransaction();
-        console.error('Checkout error:', error);
+        console.error('❌ Checkout error:', error);
+        console.error('Error stack:', error.stack);
         return NextResponse.json({
             success: false,
-            error: 'Failed to complete checkout',
-            details: error.message
+            error: error.message || 'Failed to complete checkout',
+            details: error.toString()
         }, { status: 500 });
     } finally {
         session.endSession();
