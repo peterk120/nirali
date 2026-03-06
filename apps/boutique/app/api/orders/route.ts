@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
         }
 
-        const orders = await Order.find({ userId: user._id.toString() }).sort({ createdAt: -1 });
+        // ADMIN: Fetch ALL orders
+        // USER: Fetch only their own orders
+        let orders;
+        if (user.role === 'admin') {
+            orders = await Order.find({}).sort({ createdAt: -1 });
+        } else {
+            orders = await Order.find({ userId: user._id.toString() }).sort({ createdAt: -1 });
+        }
 
         return NextResponse.json({
             success: true,

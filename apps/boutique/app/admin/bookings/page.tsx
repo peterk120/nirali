@@ -565,10 +565,39 @@ export default function AdminOrdersPage() {
     checkAuth();
   }, [router]);
 
-  const handleUpdateStatus = (id: string) =>
-    setOrders(prev => prev.map(o =>
-      o.id === id ? { ...o, status: o.status === 'Pending' ? 'Confirmed' : 'Pending' } : o
-    ));
+  const handleUpdateStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'Pending' ? 'Confirmed' : 'Pending';
+      const token = localStorage.getItem('token');
+      
+      // Call API to update status in database
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: newStatus
+        })
+      });
+      
+      const result = await res.json();
+      
+      if (result.success) {
+        // Update local state after successful API call
+        setOrders(prev => prev.map(o => 
+          o.id === id ? { ...o, status: newStatus } : o
+        ));
+        alert(`Order ${newStatus.toLowerCase()} successfully!`);
+      } else {
+        alert('Failed to update order status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating order status');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -707,7 +736,7 @@ export default function AdminOrdersPage() {
                       </button>
                       <button
                         className="ob-btn-update"
-                        onClick={() => handleUpdateStatus(order.id)}
+                        onClick={() => handleUpdateStatus(order.id, order.status)}
                       >
                         <RefreshCw size={11} />
                         {order.status === 'Pending' ? 'Confirm' : 'Update'}
