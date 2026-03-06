@@ -139,10 +139,22 @@ const PaymentPage = () => {
         
         console.log('✅ Payment simulated successfully');
         console.log('📦 Calling checkout API with', itemsToBook.length, 'items');
+        
+        // Format phone number - remove country code and spaces for validation
+        const formatPhone = (phone: string | undefined) => {
+          if (!phone) return '9876543210';
+          // Remove +91, spaces, dashes, and keep only digits
+          const cleaned = phone.replace(/^[+]?91/, '').replace(/[\s-]/g, '');
+          // If result is not 10 digits, use fallback
+          return /^[6-9]\d{9}$/.test(cleaned) ? cleaned : '9876543210';
+        };
+        
+        const formattedPhone = formatPhone(userProfile?.phone);
+        
         console.log('👤 Customer Details:', {
           name: userProfile?.name || 'Customer Name',
           email: userProfile?.email || 'customer@example.com',
-          phone: userProfile?.phone || '9876543210',
+          phone: formattedPhone,
           address: userProfile?.address || '123 Main Street, City, State 123456'
         });
         
@@ -158,7 +170,7 @@ const PaymentPage = () => {
             customerDetails: {
               name: userProfile?.name || 'Customer Name',
               email: userProfile?.email || 'customer@example.com',
-              phone: userProfile?.phone || '9876543210', // Valid 10-digit Indian number
+              phone: formattedPhone,
               address: userProfile?.address || '123 Main Street, City, State 123456'
             },
             paymentDetails: {
