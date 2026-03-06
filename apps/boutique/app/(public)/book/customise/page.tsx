@@ -344,6 +344,8 @@ const CustomisePage = () => {
     selectedDress,
     bookingItems, // Support multiple items
     selectedSize,
+    selectedDate,
+    returnDate,
     customMeasurements,
     specialInstructions,
     selectedJewellery,
@@ -356,6 +358,10 @@ const CustomisePage = () => {
 
   const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
 
+  // Enhanced state for individual product size customization
+  const [productSizes, setProductSizes] = useState<{[key: string]: string}>({});
+  const [showSizeSelector, setShowSizeSelector] = useState<string | null>(null); // productId showing size selector
+
   const [isCustomFittingEnabled, setIsCustomFittingEnabled] = useState(false);
   const [jewelleryOptions] = useState([
     { id: 'j1', name: 'Traditional Necklace Set', price: 800 },
@@ -366,6 +372,16 @@ const CustomisePage = () => {
 
   const handleSizeChange = (size: string) => setSelectedSize(size);
 
+  // Enhanced size handlers for individual products
+  const handleProductSizeSelect = (productId: string, size: string) => {
+    setProductSizes(prev => ({ ...prev, [productId]: size }));
+    setShowSizeSelector(null);
+  };
+
+  const handleChangeSizeClick = (productId: string) => {
+    setShowSizeSelector(showSizeSelector === productId ? null : productId);
+  };
+
   const handleJewelleryToggle = (jewelleryId: string) => {
     if (selectedJewellery.includes(jewelleryId)) {
       setSelectedJewellery(selectedJewellery.filter(id => id !== jewelleryId));
@@ -373,6 +389,9 @@ const CustomisePage = () => {
       setSelectedJewellery([...selectedJewellery, jewelleryId]);
     }
   };
+
+  const formatDate = (date: Date) =>
+    new Date(date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const handleContinue = () => {
     setStep(4);
@@ -422,9 +441,9 @@ const CustomisePage = () => {
 
           {/* Sidebar — dress summary */}
           <div className="cust-sidebar">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {itemsToBook.map((item, idx) => (
-                <div key={idx} className="dress-info-card">
+                <div key={idx} className="dress-info-card" style={{ position: 'relative' }}>
                   {(item.image || item.images?.[0]) ? (
                     <img
                       src={item.image || item.images[0]}
@@ -441,6 +460,61 @@ const CustomisePage = () => {
                       ₹{(item.price || item.rentalPricePerDay || 0).toLocaleString()}
                       <span>/day</span>
                     </div>
+                    
+                    {/* Size display with change button */}
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--stone)' }}>
+                      <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mink)', marginBottom: '4px' }}>
+                        Selected Size
+                      </div>
+                      {showSizeSelector === item.id ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                          {(item.sizes || ['S', 'M', 'L', 'XL']).map(size => (
+                            <button
+                              key={size}
+                              onClick={() => handleProductSizeSelect(item.id, size)}
+                              style={{
+                                padding: '6px 12px',
+                                border: productSizes[item.id] === size ? '1px solid var(--espresso)' : '1px solid var(--stone)',
+                                background: productSizes[item.id] === size ? 'var(--espresso)' : 'transparent',
+                                color: productSizes[item.id] === size ? '#fff' : 'var(--umber)',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--espresso)' }}>
+                            {productSizes[item.id] || item.selectedSize || selectedSize || 'Not selected'}
+                          </span>
+                          <button
+                            onClick={() => handleChangeSizeClick(item.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '10px',
+                              color: 'var(--gold)',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              padding: 0
+                            }}
+                          >
+                            Change Size
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Rental period if available */}
+                    {(selectedDate && returnDate) && (
+                      <div style={{ marginTop: '8px', fontSize: '10px', color: 'var(--mink)' }}>
+                        <div>{formatDate(selectedDate)} → {formatDate(returnDate)}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -452,7 +526,7 @@ const CustomisePage = () => {
 
             {/* Size */}
             <div className="section-card">
-              <div className="section-heading">Select Size</div>
+              <div className="section-heading">Select Size {itemsToBook.length > 1 && '(Individual sizes shown in sidebar)'}</div>
               <div className="size-group">
                 {selectedDress?.sizes.map(size => (
                   <button
@@ -464,6 +538,11 @@ const CustomisePage = () => {
                   </button>
                 ))}
               </div>
+              {itemsToBook.length > 1 && (
+                <p style={{ fontSize: '11px', color: 'var(--mink)', marginTop: '12px', fontStyle: 'italic' }}>
+                  Note: For multiple items, use the "Change Size" button on each product in the sidebar to set individual sizes.
+                </p>
+              )}
             </div>
 
             {/* Custom fitting — component untouched */}

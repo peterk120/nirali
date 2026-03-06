@@ -295,7 +295,10 @@ const SelectDatePage = () => {
   } = useBookingStore();
 
   const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
-  // ... rest of the component
+  
+  // Enhanced state for dual date selection
+  const [dateSelectionMode, setDateSelectionMode] = useState<'pickup' | 'return'>('pickup');
+  const [tempPickupDate, setTempPickupDate] = useState<Date | null>(null);
 
   const bookedDates = ['2026-03-15', '2026-03-16', '2026-03-20'];
   const limitedDates = ['2026-03-10', '2026-03-25'];
@@ -313,9 +316,31 @@ const SelectDatePage = () => {
   };
 
   const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    const calculatedReturnDate = calculateReturnDate(date, rentalDuration);
-    setReturnDate(calculatedReturnDate);
+    if (dateSelectionMode === 'pickup') {
+      // First selection: pickup date
+      setTempPickupDate(date);
+      setSelectedDate(date);
+      setDateSelectionMode('return');
+      
+      // Calculate default return date based on duration
+      const calculatedReturnDate = calculateReturnDate(date, rentalDuration);
+      setReturnDate(calculatedReturnDate);
+    } else {
+      // Second selection: return date
+      if (tempPickupDate && date > tempPickupDate) {
+        setSelectedDate(tempPickupDate);
+        setReturnDate(date);
+        
+        // Calculate and update rental duration based on selected dates
+        const daysDiff = Math.ceil((date.getTime() - tempPickupDate.getTime()) / (1000 * 60 * 60 * 24));
+        setRentalDuration(daysDiff);
+        
+        setDateSelectionMode('pickup'); // Reset for next booking
+        setTempPickupDate(null);
+      } else {
+        alert('Return date must be after pickup date');
+      }
+    }
   };
 
   const handleDurationChange = (days: number) => {
@@ -410,6 +435,16 @@ const SelectDatePage = () => {
 
           {/* Calendar — component untouched */}
           <div className="calendar-card">
+            <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+              <p style={{ fontSize: '13px', color: 'var(--mink)', marginBottom: '8px' }}>
+                {dateSelectionMode === 'pickup' ? '📅 Select your pick-up date' : '📦 Now select return date'}
+              </p>
+              {tempPickupDate && (
+                <p style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: 500 }}>
+                  Pick-up: {formatDate(tempPickupDate)} → Return: Click a later date
+                </p>
+              )}
+            </div>
             <BookingCalendar
               bookedDates={bookedDates}
               limitedDates={limitedDates}
