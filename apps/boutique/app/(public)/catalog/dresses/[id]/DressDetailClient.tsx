@@ -33,6 +33,32 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
   const [loading, setLoading] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [productRating, setProductRating] = useState({
+    averageRating: product.averageRating || 4.0,
+    reviewCount: product.totalReviews || 0
+  });
+
+  // Fetch actual ratings on mount
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const productId = product._id || product.id;
+        const response = await fetch(`/api/products/${productId}/ratings`);
+        const result = await response.json();
+        
+        if (result.success) {
+          setProductRating({
+            averageRating: result.data.averageRating,
+            reviewCount: result.data.reviewCount
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching ratings:', error);
+      }
+    };
+
+    fetchRatings();
+  }, [product]);
 
   // Initialize wishlist state from localStorage or API
   useEffect(() => {
@@ -209,12 +235,17 @@ export const DressDetailClient: React.FC<DressDetailClientProps> = ({ product, s
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                        }`}
+                      className={`w-5 h-5 ${
+                        i < Math.floor(productRating.averageRating) 
+                          ? 'text-yellow-400 fill-current' 
+                          : 'text-gray-300'
+                      }`}
                     />
                   ))}
                 </div>
-                <span className="text-gray-600">(4.0 • 128 reviews)</span>
+                <span className="text-gray-600">
+                  ({productRating.averageRating.toFixed(1)} • {productRating.reviewCount} reviews)
+                </span>
               </div>
 
               {/* Size Selection */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBookingStore } from '../../../../lib/stores/bookingStore';
 import { BookingProgressBar } from '../../../../components/booking/BookingProgressBar';
@@ -362,6 +362,30 @@ const CustomisePage = () => {
 
   // UI state only for showing/hiding size selector (not persisted)
   const [showSizeSelector, setShowSizeSelector] = useState<string | null>(null);
+  
+  // Initialize product sizes from cart items on mount
+  useEffect(() => {
+    if (itemsToBook.length > 0 && Object.keys(productSizeSelections).length === 0) {
+      // No sizes set yet, initialize from cart items
+      const initialSizes: Record<string, string> = {};
+      itemsToBook.forEach(item => {
+        if (item.size) {
+          initialSizes[item.id] = item.size;
+        }
+      });
+      
+      // If we have sizes from cart, set them
+      if (Object.keys(initialSizes).length > 0) {
+        // Set each size individually
+        Object.entries(initialSizes).forEach(([productId, size]) => {
+          setSelectedSizeForProduct(productId, size);
+        });
+      } else if (selectedSize && itemsToBook.length === 1) {
+        // Fallback: if single item and common size is set, use it
+        setSelectedSizeForProduct(itemsToBook[0].id, selectedSize);
+      }
+    }
+  }, [itemsToBook]);
 
   const [isCustomFittingEnabled, setIsCustomFittingEnabled] = useState(false);
   const [jewelleryOptions] = useState([

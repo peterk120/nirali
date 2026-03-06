@@ -6,7 +6,11 @@ export interface IProduct extends Document {
   category: string;
   brand: 'boutique' | 'bridal-jewels' | 'sasthik' | 'tamilsmakeover';
   color?: string;
-  size?: string;
+  size?: string; // Legacy field for backwards compatibility
+  sizes?: Array<{
+    size: string;
+    available: boolean;
+  }>; // New field for size availability
   image: string;
   cloudinary_public_id?: string;
   description: string;
@@ -59,6 +63,10 @@ const ProductSchema: Schema = new Schema({
     trim: true,
     maxlength: [20, 'Size cannot exceed 20 characters']
   },
+  sizes: [{
+    size: String,
+    available: { type: Boolean, default: true }
+  }],
   image: {
     type: String,
     required: [true, 'Image URL is required']

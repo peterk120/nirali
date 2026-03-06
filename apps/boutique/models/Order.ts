@@ -6,6 +6,7 @@ export interface IOrder extends Document {
   productId: mongoose.Types.ObjectId; // Changed to ObjectId reference
   productName: string;
   productImage: string;
+  size?: string; // Selected size for this product
   rentalStartDate: Date;
   rentalEndDate: Date;
   rentalDays: number;
@@ -33,6 +34,7 @@ const OrderSchema: Schema = new Schema({
   productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true }, // Changed to ObjectId reference
   productName: String,
   productImage: String,
+  size: String, // Selected size for this product
   rentalStartDate: Date,
   rentalEndDate: Date,
   rentalDays: Number,

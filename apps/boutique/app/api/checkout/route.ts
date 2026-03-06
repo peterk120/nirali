@@ -174,16 +174,33 @@ export async function POST(request: NextRequest) {
                     if (product.stock < (item.quantity || 1)) {
                         throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}`);
                     }
+                    
+                    // PREVENT DOUBLE BOOKING: Check if product is already booked for overlapping dates
+                    const existingBooking = await Order.findOne({
+                        productId: new mongoose.Types.ObjectId(cleanProductId),
+                        status: { $in: ['confirmed', 'active', 'processing'] }, // Only check active bookings
+                        $or: [
+                            {
+                                // Existing booking overlaps with requested dates
+                                rentalStartDate: { $lte: new Date(bookingPeriod.endDate) },
+                                rentalEndDate: { $gte: new Date(bookingPeriod.startDate) }
+                            }
+                        ]
+                    }).session(session);
+                    
+                    if (existingBooking) {
+                        throw new Error(`This dress is already booked for the selected dates (${existingBooking.rentalStartDate.toLocaleDateString()} - ${existingBooking.rentalEndDate.toLocaleDateString()})`);
+                    }
                 } else {
                     // Development mode: Allow checkout with simulated/fake product IDs
-                    console.log(`⚠️ Development Mode: Skipping stock check for product ID "${rawProductId}" (not a valid ObjectId)`);
+                    console.log(`⚠️ Development Mode: Skipping stock check and double-booking validation for product ID "${rawProductId}" (not a valid ObjectId)`);
                 }
             } catch (stockError: any) {
                 // If it's a cast error (invalid ObjectId), allow it in development mode
                 if (stockError.name === 'CastError' || stockError.name === 'BSONError') {
                     console.log(`⚠️ Development Mode: Invalid ObjectId format - "${rawProductId}". Skipping stock validation.`);
                 } else {
-                    // Re-throw other errors (like actual stock issues)
+                    // Re-throw other errors (like actual stock issues or double booking)
                     throw stockError;
                 }
             }
@@ -193,6 +210,7 @@ export async function POST(request: NextRequest) {
                 productId: productIdForOrder,
                 productName: item.name,
                 productImage: item.image || item.images?.[0],
+                size: item.size || undefined, // Include selected size from cart/booking
                 rentalStartDate: bookingPeriod.startDate,
                 rentalEndDate: bookingPeriod.endDate,
                 rentalDays: bookingPeriod.days,

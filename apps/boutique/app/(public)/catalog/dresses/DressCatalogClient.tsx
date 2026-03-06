@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dress } from '@nirali-sai/types';
+import { motion, AnimatePresence } from 'framer-motion';
 import { showAddedToCart } from '../../../../lib/toast';
 
 // ─── Luxury Design Tokens ────────────────────────────────────────────────────
@@ -572,6 +573,7 @@ const transformDressToCardProps = (dress: Dress) => ({
   category: dress.category,
   color: dress.colors?.[0]?.name || dress.color || 'N/A',
   size: dress.sizes?.[0]?.size || dress.size || 'N/A',
+  sizes: dress.sizes || [], // Include full sizes array for availability checking
   image: dress.images?.[0]?.url || dress.image || null,
   isFavorite: false,
   // ✅ slug added so Reserve can route correctly
@@ -707,6 +709,9 @@ function LuxuryDressCard({
   onReserve: (slug: string) => void;
 }) {
   const [isFav, setIsFav] = useState(dress.isFavorite);
+  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   if (viewMode === 'list') {
     return (
@@ -738,20 +743,10 @@ function LuxuryDressCard({
             </button>
             <button
               className="list-cta cart-btn"
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                const { useCartStore } = await import('../../../../lib/stores/cartStore');
-                await useCartStore.getState().addItem({
-                  productId: dress.id,
-                  quantity: 1,
-                  rentalDays: 3,
-                  size: dress.size || 'Medium',
-                  name: dress.name,
-                  price: dress.price,
-                  image: dress.image,
-                  category: dress.category
-                });
-                showAddedToCart(dress.name);
+                setShowSizeModal(true);
+                setSelectedSize('');
               }}
             >
               Add to Cart
@@ -787,20 +782,10 @@ function LuxuryDressCard({
             </button>
             <button
               className="card-overlay-btn cart-btn"
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                const { useCartStore } = await import('../../../../lib/stores/cartStore');
-                await useCartStore.getState().addItem({
-                  productId: dress.id,
-                  quantity: 1,
-                  rentalDays: 3,
-                  size: dress.size || 'Medium',
-                  name: dress.name,
-                  price: dress.price,
-                  image: dress.image,
-                  category: dress.category
-                });
-                showAddedToCart(dress.name);
+                setShowSizeModal(true);
+                setSelectedSize('');
               }}
             >
               Add to Cart
@@ -822,6 +807,234 @@ function LuxuryDressCard({
           <span className="card-price">₹{dress.price?.toLocaleString()}</span>
         </div>
       </div>
+
+      {/* Size Selection Modal - Inside Card Component */}
+      {showSizeModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => {
+            setShowSizeModal(false);
+            setSelectedSize('');
+          }}
+        >
+          <div
+            style={{
+              background: '#FFF8F8',
+              borderRadius: '8px',
+              maxWidth: '450px',
+              width: '100%',
+              padding: '32px',
+              position: 'relative',
+              boxShadow: '0 20px 60px rgba(107, 31, 42, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setShowSizeModal(false);
+                setSelectedSize('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#6B1F2A',
+                padding: '0',
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '3/4',
+                maxWidth: '200px',
+                margin: '0 auto 24px',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                background: '#F5E6E8'
+              }}
+            >
+              <img
+                src={dress.image || '/placeholder-product.jpg'}
+                alt={dress.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+
+            <h3
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 'clamp(1.5rem, 3vw, 1.75rem)',
+                fontWeight: 400,
+                color: '#1A1A2E',
+                textAlign: 'center',
+                marginBottom: '8px'
+              }}
+            >
+              {dress.name}
+            </h3>
+
+            <p
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                fontSize: '1.1rem',
+                fontWeight: 500,
+                color: '#C0436A',
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}
+            >
+              ₹{dress.price?.toLocaleString()} / day
+            </p>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  color: '#6B1F2A',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                Select Size
+              </label>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '8px'
+                }}
+              >
+                {['S', 'M', 'L', 'XL'].map((sizeOption) => (
+                  <button
+                    key={sizeOption}
+                    onClick={() => setSelectedSize(sizeOption)}
+                    style={{
+                      padding: '12px 8px',
+                      border: selectedSize === sizeOption ? '2px solid #6B1F2A' : '1px solid #F0C4CC',
+                      background: selectedSize === sizeOption ? '#6B1F2A' : 'transparent',
+                      color: selectedSize === sizeOption ? '#FFF8F8' : '#7A5560',
+                      fontFamily: "'Jost', sans-serif",
+                      fontSize: '0.9rem',
+                      fontWeight: selectedSize === sizeOption ? 600 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    {sizeOption}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+                marginTop: '24px'
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowSizeModal(false);
+                  setSelectedSize('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  border: '1px solid #F0C4CC',
+                  color: '#7A5560',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!selectedSize) {
+                    alert('Please select a size');
+                    return;
+                  }
+                  
+                  setIsAdding(true);
+                  try {
+                    const { useCartStore } = await import('../../../../lib/stores/cartStore');
+                    await useCartStore.getState().addItem({
+                      productId: dress.id,
+                      quantity: 1,
+                      rentalDays: 3,
+                      size: selectedSize,
+                      name: dress.name,
+                      price: dress.price,
+                      image: dress.image,
+                      category: dress.category
+                    });
+                    showAddedToCart(dress.name);
+                    setShowSizeModal(false);
+                    setSelectedSize('');
+                  } catch (error) {
+                    console.error('Error adding to cart:', error);
+                    alert('Failed to add to cart');
+                  } finally {
+                    setIsAdding(false);
+                  }
+                }}
+                disabled={isAdding || !selectedSize}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: (!selectedSize || isAdding) ? '#F0C4CC' : '#6B1F2A',
+                  border: 'none',
+                  color: '#FFF8F8',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: (!selectedSize || isAdding) ? 'not-allowed' : 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {isAdding ? 'Adding...' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
