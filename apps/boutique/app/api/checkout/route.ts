@@ -130,6 +130,8 @@ export async function POST(request: NextRequest) {
         // The frontend has already simulated the payment success before calling this endpoint
         console.log('✅ Payment confirmed by client - proceeding with order creation');
 
+        const isDevelopment = process.env.NODE_ENV === 'development';
+
         // 2. Create Orders with stock validation
         const orderPromises = items.map(async (item: any) => {
             // Validate item
@@ -156,48 +158,52 @@ export async function POST(request: NextRequest) {
                 ? cleanProductId 
                 : rawProductId;
             
-            // Check stock availability (skip for development/simulation mode with fake product IDs)
-            // In production, all product IDs should be valid MongoDB ObjectIds
-            let product = null;
-            try {
-                // Only check stock if using cleaned product ID
-                if (mongoose.Types.ObjectId.isValid(cleanProductId)) {
-                    product = await Product.findById(cleanProductId).session(session);
-                    if (!product) {
-                        throw new Error(`Product ${cleanProductId} not found in database`);
+            // DEVELOPMENT MODE: Skip complex stock checks to avoid timeouts
+            if (isDevelopment) {
+                console.log(`⚡ Dev Mode: Skipping stock validation for ${cleanProductId}`);
+            } else {
+                // PRODUCTION MODE: Full validation
+                let product = null;
+                try {
+                    // Only check stock if using cleaned product ID
+                    if (mongoose.Types.ObjectId.isValid(cleanProductId)) {
+                        product = await Product.findById(cleanProductId).session(session);
+                        if (!product) {
+                            throw new Error(`Product ${cleanProductId} not found in database`);
+                        }
+                        
+                        if (product.stock < (item.quantity || 1)) {
+                            throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}`);
+                        }
+                        
+                        // PREVENT DOUBLE BOOKING: Check if product is already booked for overlapping dates
+                        const existingBooking = await Order.findOne({
+                            productId: new mongoose.Types.ObjectId(cleanProductId),
+                            status: { $in: ['confirmed', 'active', 'processing'] }, // Only check active bookings
+                            $or: [
+                                {
+                                    // Existing booking overlaps with requested dates
+                                    rentalStartDate: { $lte: new Date(bookingPeriod.endDate) },
+                                    rentalEndDate: { $gte: new Date(bookingPeriod.startDate) }
+                                }
+                            ]
+                        }).session(session);
+                        
+                        if (existingBooking) {
+                            throw new Error(`This dress is already booked for the selected dates (${existingBooking.rentalStartDate.toLocaleDateString()} - ${existingBooking.rentalEndDate.toLocaleDateString()})`);
+                        }
+                    } else {
+                        // Development mode: Allow checkout with simulated/fake product IDs
+                        console.log(`⚠️ Development Mode: Skipping stock check and double-booking validation for product ID "${rawProductId}" (not a valid ObjectId)`);
                     }
-                    
-                    if (product.stock < (item.quantity || 1)) {
-                        throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}`);
+                } catch (stockError: any) {
+                    // If it's a cast error (invalid ObjectId), allow it in development mode
+                    if (stockError.name === 'CastError' || stockError.name === 'BSONError') {
+                        console.log(`⚠️ Development Mode: Invalid ObjectId format - "${rawProductId}". Skipping stock validation.`);
+                    } else {
+                        // Re-throw other errors (like actual stock issues or double booking)
+                        throw stockError;
                     }
-                    
-                    // PREVENT DOUBLE BOOKING: Check if product is already booked for overlapping dates
-                    const existingBooking = await Order.findOne({
-                        productId: new mongoose.Types.ObjectId(cleanProductId),
-                        status: { $in: ['confirmed', 'active', 'processing'] }, // Only check active bookings
-                        $or: [
-                            {
-                                // Existing booking overlaps with requested dates
-                                rentalStartDate: { $lte: new Date(bookingPeriod.endDate) },
-                                rentalEndDate: { $gte: new Date(bookingPeriod.startDate) }
-                            }
-                        ]
-                    }).session(session);
-                    
-                    if (existingBooking) {
-                        throw new Error(`This dress is already booked for the selected dates (${existingBooking.rentalStartDate.toLocaleDateString()} - ${existingBooking.rentalEndDate.toLocaleDateString()})`);
-                    }
-                } else {
-                    // Development mode: Allow checkout with simulated/fake product IDs
-                    console.log(`⚠️ Development Mode: Skipping stock check and double-booking validation for product ID "${rawProductId}" (not a valid ObjectId)`);
-                }
-            } catch (stockError: any) {
-                // If it's a cast error (invalid ObjectId), allow it in development mode
-                if (stockError.name === 'CastError' || stockError.name === 'BSONError') {
-                    console.log(`⚠️ Development Mode: Invalid ObjectId format - "${rawProductId}". Skipping stock validation.`);
-                } else {
-                    // Re-throw other errors (like actual stock issues or double booking)
-                    throw stockError;
                 }
             }
 

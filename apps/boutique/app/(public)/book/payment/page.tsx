@@ -120,25 +120,46 @@ const PaymentPage = () => {
         // ============================================
         console.log('💰 Development Mode: Simulating payment...');
         
+        // Check if user profile exists
+        if (!userProfile || !userProfile.email) {
+          throw new Error('User profile is missing. Please login again.');
+        }
+
+        // Check token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication token not found. Please login again.');
+        }
+
+        console.log('👤 User email:', userProfile.email);
+        console.log('🔑 Token present:', !!token);
+        
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, PAYMENT_DELAY_MS));
         
         console.log('✅ Payment simulated successfully');
+        console.log('📦 Calling checkout API with', itemsToBook.length, 'items');
+        console.log('👤 Customer Details:', {
+          name: userProfile?.name || 'Customer Name',
+          email: userProfile?.email || 'customer@example.com',
+          phone: userProfile?.phone || '9876543210',
+          address: userProfile?.address || '123 Main Street, City, State 123456'
+        });
         
         // Call checkout API directly with simulated payment details
         const checkoutRes = await fetch('/api/checkout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             items: itemsToBook,
             customerDetails: {
-              name: userProfile?.name || 'Customer',
+              name: userProfile?.name || 'Customer Name',
               email: userProfile?.email || 'customer@example.com',
-              phone: userProfile?.phone || '9999999999',
-              address: userProfile?.address || 'Default Address'
+              phone: userProfile?.phone || '9876543210', // Valid 10-digit Indian number
+              address: userProfile?.address || '123 Main Street, City, State 123456'
             },
             paymentDetails: {
               // Simulated payment signature for development
@@ -155,10 +176,20 @@ const PaymentPage = () => {
           })
         });
 
-       const rawText = await checkoutRes.text();
-        console.log('🔴 Raw server response:', rawText);
-        const checkoutResult = JSON.parse(rawText);
+        console.log('📝 Server response status:', checkoutRes.status);
+        const rawText = await checkoutRes.text();
+        console.log('📝 Raw server response:', rawText);
+        
+        let checkoutResult;
+        try {
+          checkoutResult = JSON.parse(rawText);
+        } catch (parseError) {
+          console.error('Failed to parse response:', parseError);
+          throw new Error('Server returned invalid JSON');
+        }
+        
         console.log('❌ Checkout error details:', checkoutResult.details);
+        console.log('❌ Checkout error message:', checkoutResult.error);
 
         if (!checkoutResult.success) {
           throw new Error(checkoutResult.error || 'Checkout failed');
