@@ -346,11 +346,13 @@ const CustomisePage = () => {
     selectedSize,
     selectedDate,
     returnDate,
+    productSizeSelections, // Individual product sizes from store
     customMeasurements,
     specialInstructions,
     selectedJewellery,
     setStep,
     setSelectedSize,
+    setSelectedSizeForProduct, // New action for individual product sizes
     setCustomMeasurements,
     setSpecialInstructions,
     setSelectedJewellery,
@@ -358,9 +360,8 @@ const CustomisePage = () => {
 
   const itemsToBook = bookingItems.length > 0 ? bookingItems : (selectedDress ? [selectedDress] : []);
 
-  // Enhanced state for individual product size customization
-  const [productSizes, setProductSizes] = useState<{[key: string]: string}>({});
-  const [showSizeSelector, setShowSizeSelector] = useState<string | null>(null); // productId showing size selector
+  // UI state only for showing/hiding size selector (not persisted)
+  const [showSizeSelector, setShowSizeSelector] = useState<string | null>(null);
 
   const [isCustomFittingEnabled, setIsCustomFittingEnabled] = useState(false);
   const [jewelleryOptions] = useState([
@@ -372,9 +373,9 @@ const CustomisePage = () => {
 
   const handleSizeChange = (size: string) => setSelectedSize(size);
 
-  // Enhanced size handlers for individual products
+  // Enhanced size handlers for individual products using store
   const handleProductSizeSelect = (productId: string, size: string) => {
-    setProductSizes(prev => ({ ...prev, [productId]: size }));
+    setSelectedSizeForProduct(productId, size); // Save to store (persists to localStorage)
     setShowSizeSelector(null);
   };
 
@@ -474,9 +475,9 @@ const CustomisePage = () => {
                               onClick={() => handleProductSizeSelect(item.id, size)}
                               style={{
                                 padding: '6px 12px',
-                                border: productSizes[item.id] === size ? '1px solid var(--espresso)' : '1px solid var(--stone)',
-                                background: productSizes[item.id] === size ? 'var(--espresso)' : 'transparent',
-                                color: productSizes[item.id] === size ? '#fff' : 'var(--umber)',
+                                border: productSizeSelections[item.id] === size ? '1px solid var(--espresso)' : '1px solid var(--stone)',
+                                background: productSizeSelections[item.id] === size ? 'var(--espresso)' : 'transparent',
+                                color: productSizeSelections[item.id] === size ? '#fff' : 'var(--umber)',
                                 fontSize: '11px',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s'
@@ -489,7 +490,7 @@ const CustomisePage = () => {
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
                           <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--espresso)' }}>
-                            {productSizes[item.id] || item.selectedSize || selectedSize || 'Not selected'}
+                            {productSizeSelections[item.id] || item.selectedSize || selectedSize || 'Not selected'}
                           </span>
                           <button
                             onClick={() => handleChangeSizeClick(item.id)}

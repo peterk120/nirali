@@ -71,10 +71,11 @@ const PaymentPage = () => {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
     
-    if (startDate < today) {
-      alert('Rental start date cannot be in the past');
+    // Allow today's date, but reject past dates
+    if (startDate.getTime() < today.getTime()) {
+      alert('Rental start date cannot be in the past. You can select today as the pickup date.');
       router.push('/book/date');
-    } else if (endDate <= startDate) {
+    } else if (endDate.getTime() <= startDate.getTime()) {
       alert('Return date must be after start date');
       router.push('/book/date');
     }

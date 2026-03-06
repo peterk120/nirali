@@ -28,6 +28,7 @@ interface BookingState {
   returnDate: Date | null;
   rentalDuration: number; // in days
   selectedSize: string | null;
+  productSizeSelections: Record<string, string>; // productId -> size mapping for multi-item bookings
   customMeasurements: string;
   specialInstructions: string;
   selectedJewellery: string[];
@@ -51,6 +52,7 @@ interface BookingState {
   setReturnDate: (date: Date) => void;
   setRentalDuration: (duration: number) => void;
   setSelectedSize: (size: string) => void;
+  setSelectedSizeForProduct: (productId: string, size: string) => void;
   setCustomMeasurements: (measurements: string) => void;
   setSpecialInstructions: (instructions: string) => void;
   setSelectedJewellery: (jewellery: string[]) => void;
@@ -71,6 +73,7 @@ export const useBookingStore = create<BookingState>()(
       returnDate: null,
       rentalDuration: 1,
       selectedSize: null,
+      productSizeSelections: {}, // Initialize empty object for product size mappings
       customMeasurements: '',
       specialInstructions: '',
       selectedJewellery: [],
@@ -87,6 +90,10 @@ export const useBookingStore = create<BookingState>()(
       setReturnDate: (date) => set({ returnDate: date }),
       setRentalDuration: (duration) => set({ rentalDuration: duration }),
       setSelectedSize: (size) => set({ selectedSize: size }),
+      setSelectedSizeForProduct: (productId, size) => 
+        set((state) => ({ 
+          productSizeSelections: { ...state.productSizeSelections, [productId]: size } 
+        })),
       setCustomMeasurements: (measurements) => set({ customMeasurements: measurements }),
       setSpecialInstructions: (instructions) => set({ specialInstructions: instructions }),
       setSelectedJewellery: (jewellery) => set({ selectedJewellery: jewellery }),
@@ -103,6 +110,7 @@ export const useBookingStore = create<BookingState>()(
         returnDate: null,
         rentalDuration: 1,
         selectedSize: null,
+        productSizeSelections: {}, // Reset product sizes too
         customMeasurements: '',
         specialInstructions: '',
         selectedJewellery: [],
@@ -123,6 +131,7 @@ export const useBookingStore = create<BookingState>()(
         returnDate: state.returnDate,
         rentalDuration: state.rentalDuration,
         selectedSize: state.selectedSize,
+        productSizeSelections: state.productSizeSelections, // Persist individual product sizes
         customMeasurements: state.customMeasurements,
         specialInstructions: state.specialInstructions,
         selectedJewellery: state.selectedJewellery,
