@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type (image or video)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mov', 'video/avi', 'video/wmv', 'text/plain'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'video/mp4', 'video/mov', 'video/avi', 'video/wmv', 'text/plain'];
     if (!allowedTypes.includes(file.type)) {
       return Response.json(
-        { success: false, error: `Invalid file type: ${file.type}. Only images, videos, and text files are allowed for testing.` },
+        { success: false, error: `Invalid file type: ${file.type}. Only images (JPEG, PNG, GIF, WebP, HEIC), videos, and text files are allowed for testing.` },
         { status: 400 }
       );
     }

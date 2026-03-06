@@ -18,9 +18,9 @@ export default function NewProductPage() {
     console.log('File selected:', file);
 
     if (file) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
       if (!allowedTypes.includes(file.type)) {
-        toast.error('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+        toast.error('Please select a valid image file (JPEG, PNG, GIF, WebP, or HEIC)');
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
