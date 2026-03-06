@@ -13,15 +13,19 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Email and password are required' }, { status: 400 });
         }
 
-        // Rate limiting - use IP or email as identifier
-        const clientIP = request.headers.get('x-forwarded-for') || 'unknown';
-        const rateLimitResult = rateLimiters.login(`${clientIP}-${email}`);
+        // Rate limiting - use IP or email as identifier (disabled in development)
+        const isDevelopment = process.env.NODE_ENV === 'development';
         
-        if (!rateLimitResult.success) {
-            return NextResponse.json(
-                { success: false, error: rateLimitResult.message, retryAfter: rateLimitResult.retryAfter },
-                { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
-            );
+        if (!isDevelopment) {
+            const clientIP = request.headers.get('x-forwarded-for') || 'unknown';
+            const rateLimitResult = rateLimiters.login(`${clientIP}-${email}`);
+            
+            if (!rateLimitResult.success) {
+                return NextResponse.json(
+                    { success: false, error: rateLimitResult.message, retryAfter: rateLimitResult.retryAfter },
+                    { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
+                );
+            }
         }
 
         await connectToDatabase();
