@@ -4,8 +4,54 @@ import connectToDatabase from '../../../../lib/mongodb';
 import Product from '../../../../models/Product';
 import { StoreType, getCSVTemplate, getAllowedStoreTypes } from '../../../../lib/csv-templates';
 import { FileParser, ParseResult } from '../../../../lib/csv-parser';
-import { uploadFile } from '../../../../lib/cloudinary';
 import JSZip from 'jszip';
+import crypto from 'crypto';
+
+// ── Same working upload function used in single-product upload ────────────────
+async function uploadToCloudinary(file: File, folder = 'nirali-sai-boutique'): Promise<{ secure_url: string; public_id: string }> {
+  let apiKey: string, apiSecret: string, cloudName: string;
+  const cloudinaryUrl = process.env.CLOUDINARY_URL;
+  if (cloudinaryUrl) {
+    const match = cloudinaryUrl.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/);
+    if (!match) throw new Error('Invalid CLOUDINARY_URL format');
+    [, apiKey, apiSecret, cloudName] = match;
+  } else {
+    apiKey = process.env.CLOUDINARY_API_KEY || '';
+    apiSecret = process.env.CLOUDINARY_API_SECRET || '';
+    cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+    if (!apiKey || !apiSecret || !cloudName)
+      throw new Error('Cloudinary credentials missing — check CLOUDINARY_URL or CLOUDINARY_API_KEY/SECRET/CLOUD_NAME in .env');
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = crypto
+    .createHash('sha1')
+    .update(`folder=${folder}&timestamp=${timestamp}${apiSecret}`)
+    .digest('hex');
+
+  const bytes = await file.arrayBuffer();
+  const blob = new Blob([Buffer.from(bytes)], { type: file.type });
+
+  const form = new FormData();
+  form.append('file', blob, file.name);
+  form.append('api_key', apiKey);
+  form.append('timestamp', String(timestamp));
+  form.append('folder', folder);
+  form.append('signature', signature);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Cloudinary upload failed: ${errText}`);
+  }
+
+  const data = await res.json();
+  return { secure_url: data.secure_url, public_id: data.public_id };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -185,7 +231,7 @@ export async function POST(request: NextRequest) {
         const imageFile = new File([uint8Array], imageFileName, { type: mimeType });
 
         console.log(`  [5d] Uploading "${imageFileName}" (${uint8Array.length} bytes, type: ${mimeType})...`);
-        uploadResult = await uploadFile(imageFile, `nirali-sai-${storeType}`);
+        uploadResult = await uploadToCloudinary(imageFile, `nirali-sai-${storeType}`);
         console.log(`  [5d ✅] Uploaded: ${uploadResult.secure_url}`);
       } catch (err) {
         const msg = `Cloudinary upload failed for "${imageFileName}": ${(err as Error).message}`;
