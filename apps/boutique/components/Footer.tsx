@@ -209,9 +209,14 @@ export default function Footer() {
           <p style={{ fontSize: 11, letterSpacing: '0.08em', color: 'rgba(240,196,204,0.35)', margin: 0 }}>
             © {year} Nirali Sai Boutique. All rights reserved.
           </p>
-          <p style={{ fontSize: 11, letterSpacing: '0.06em', color: 'rgba(240,196,204,0.3)', display: 'flex', alignItems: 'center', gap: 5, margin: 0 }}>
-            Made with <Heart size={10} style={{ color: '#C96E82' }} fill="#C96E82" /> in India
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <p style={{ fontSize: 11, letterSpacing: '0.06em', color: 'rgba(240,196,204,0.3)', display: 'flex', alignItems: 'center', gap: 5, margin: 0 }}>
+              Made with <Heart size={10} style={{ color: '#C96E82' }} fill="#C96E82" /> in India
+            </p>
+            <p style={{ fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,110,130,0.5)', fontWeight: 500, margin: 0 }}>
+              Crafted by Prajan
+            </p>
+          </div>
         </div>
       </footer>
 

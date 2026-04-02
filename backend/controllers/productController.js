@@ -1,4 +1,5 @@
 const { logActivity } = require('../utils/logger');
+const { uploadToCloudinary } = require('../utils/cloudinary');
 
 // Get all products (with optional filtering)
 const getProducts = async (req, res) => {
@@ -15,15 +16,12 @@ const getProducts = async (req, res) => {
     if (brand) query.brand = brand;
     
     if (search) {
-      // Fuzzy-ish search using regex on name and category
-      const searchRegex = new RegExp(search.split('').join('.*'), 'i'); // Very basic fuzzy
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { category: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
       ];
       
-      // Fallback for misspellings like "bangels" -> "bangles"
       if (search.toLowerCase().includes('bangel')) {
         query.$or.push({ category: /bangle/i });
       }
@@ -57,7 +55,6 @@ const getSuggestions = async (req, res) => {
 
     const regex = new RegExp(q, 'i');
     
-    // Find matching categories and product names
     const [categories, names] = await Promise.all([
       Product.distinct('category', { category: regex }),
       Product.find({ name: regex }).limit(5).select('name _id category')
@@ -91,11 +88,37 @@ const getProductById = async (req, res) => {
   }
 };
 
+// Helper: Parse product data from req.body (handles JSON string from FormData)
+const parseProductData = (req) => {
+  if (req.body.product) {
+    try {
+      return JSON.parse(req.body.product);
+    } catch (e) {
+      throw new Error('Invalid product data format');
+    }
+  }
+  return req.body;
+};
+
 // Create product
 const createProduct = async (req, res) => {
   try {
     const Product = req.dbModels.Product;
-    const product = await Product.create(req.body);
+    const productData = parseProductData(req);
+
+    // Handle image upload if present
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(
+        req.file.buffer, 
+        req.file.originalname, 
+        req.file.mimetype,
+        'products'
+      );
+      productData.image = uploadResult.secure_url;
+      productData.cloudinary_public_id = uploadResult.public_id;
+    }
+
+    const product = await Product.create(productData);
     
     // Log activity
     if (req.user && (req.user.role === 'admin' || req.user.role === 'sales')) {
@@ -104,6 +127,7 @@ const createProduct = async (req, res) => {
 
     res.status(201).json({ success: true, data: product });
   } catch (error) {
+    console.error('Create Product Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -112,10 +136,25 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const Product = req.dbModels.Product;
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const productData = parseProductData(req);
+
+    // Handle image upload if present
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(
+        req.file.buffer, 
+        req.file.originalname, 
+        req.file.mimetype,
+        'products'
+      );
+      productData.image = uploadResult.secure_url;
+      productData.cloudinary_public_id = uploadResult.public_id;
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, productData, {
       new: true,
       runValidators: true
     });
+
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
