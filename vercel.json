@@ -1,5 +1,5 @@
 {
   "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm build --filter=@nirali-sai/boutique",
+  "buildCommand": "cd ../.. && pnpm --filter @nirali-sai/boutique --filter @nirali-sai/sasthik build",
   "framework": "nextjs"
 }
