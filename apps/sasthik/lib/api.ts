@@ -277,6 +277,7 @@ export async function createJewelleryBooking(bookingData: {
 // Sashti Sparkle API functions
 export async function getProducts(filters?: {
   category?: string;
+  search?: string;
   priceRange?: [number, number];
   brand?: string;
   sort?: 'price-low' | 'price-high' | 'newest' | 'popular';
