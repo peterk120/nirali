@@ -38,4 +38,6 @@ const ActivityLogSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('ActivityLog', ActivityLogSchema);
+const ActivityLog = mongoose.models.ActivityLog || mongoose.model('ActivityLog', ActivityLogSchema);
+
+module.exports = { ActivityLog, ActivityLogSchema };

@@ -1,7 +1,6 @@
-const User = require('../models/User');
-
 const getCart = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const user = await User.findById(userId).populate('cart.productId');
     
@@ -20,6 +19,7 @@ const getCart = async (req, res) => {
 
 const addToCart = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const { productId, quantity, rentalDays, size, rentalStartDate } = req.body;
 
@@ -61,6 +61,7 @@ const addToCart = async (req, res) => {
 
 const removeFromCart = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const { productId } = req.query;
 
@@ -84,6 +85,7 @@ const removeFromCart = async (req, res) => {
 
 const updateCartItem = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const { productId, quantity, size } = req.body;
 
@@ -111,6 +113,7 @@ const updateCartItem = async (req, res) => {
 
 const clearCart = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
 

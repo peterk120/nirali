@@ -1,9 +1,9 @@
-const Product = require('../models/Product');
 const { logActivity } = require('../utils/logger');
 
 // Get all products (with optional filtering)
 const getProducts = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const { brand, category, search, limit } = req.query;
     
     let query = {};
@@ -51,6 +51,7 @@ const getProducts = async (req, res) => {
 // Get search suggestions
 const getSuggestions = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const { q } = req.query;
     if (!q) return res.status(200).json({ success: true, data: [] });
 
@@ -79,6 +80,7 @@ const getSuggestions = async (req, res) => {
 // Get product by ID
 const getProductById = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
@@ -92,11 +94,12 @@ const getProductById = async (req, res) => {
 // Create product
 const createProduct = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const product = await Product.create(req.body);
     
     // Log activity
     if (req.user && (req.user.role === 'admin' || req.user.role === 'sales')) {
-      await logActivity(req.user.id, 'add_product', `Added new product: ${product.name}`, product._id);
+      await logActivity(req.dbModels, req.user.id, 'add_product', `Added new product: ${product.name}`, product._id);
     }
 
     res.status(201).json({ success: true, data: product });
@@ -108,6 +111,7 @@ const createProduct = async (req, res) => {
 // Update product
 const updateProduct = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
@@ -118,7 +122,7 @@ const updateProduct = async (req, res) => {
 
     // Log activity
     if (req.user && (req.user.role === 'admin' || req.user.role === 'sales')) {
-      await logActivity(req.user.id, 'update_product', `Updated product: ${product.name}`, product._id);
+      await logActivity(req.dbModels, req.user.id, 'update_product', `Updated product: ${product.name}`, product._id);
     }
 
     res.status(200).json({ success: true, data: product });
@@ -130,6 +134,7 @@ const updateProduct = async (req, res) => {
 // Delete product
 const deleteProduct = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
@@ -137,7 +142,7 @@ const deleteProduct = async (req, res) => {
 
     // Log activity
     if (req.user && (req.user.role === 'admin' || req.user.role === 'sales')) {
-      await logActivity(req.user.id, 'delete_product', `Deleted product: ${product.name}`, product._id);
+      await logActivity(req.dbModels, req.user.id, 'delete_product', `Deleted product: ${product.name}`, product._id);
     }
 
     res.status(200).json({ success: true, message: 'Product deleted' });

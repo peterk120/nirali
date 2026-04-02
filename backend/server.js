@@ -11,6 +11,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const subscriberRoutes = require('./routes/subscriberRoutes');
 
+const tenantMiddleware = require('./middlewares/tenantMiddleware');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sashtik';
@@ -19,6 +21,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sashti
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(tenantMiddleware);
 
 // Database connection
 mongoose.connect(MONGODB_URI)

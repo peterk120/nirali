@@ -18,9 +18,8 @@ import {
 
 // Base fetcher function
 async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const authBaseUrl = 'http://localhost:3001/api';
-  const isAuthEndpoint = endpoint.startsWith('/auth');
-  const url = isAuthEndpoint ? `${authBaseUrl}${endpoint}` : `/api${endpoint}`;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const url = `${baseUrl}${endpoint}`;
 
   // Get JWT token from wherever it's stored (cookies, localStorage, etc.)
   // In a real app, you might use a cookie library or next-auth
@@ -28,6 +27,7 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'X-App-Source': 'boutique',
     ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };

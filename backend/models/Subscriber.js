@@ -22,4 +22,6 @@ const SubscriberSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Subscriber', SubscriberSchema);
+const Subscriber = mongoose.models.Subscriber || mongoose.model('Subscriber', SubscriberSchema);
+
+module.exports = { Subscriber, SubscriberSchema };

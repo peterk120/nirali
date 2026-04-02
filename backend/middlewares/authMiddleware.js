@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'nirali-sai-boutique-secret-key-for-dev';
 
 exports.protect = async (req, res, next) => {
   try {
+    const User = req.dbModels.User; // Use tenant-specific model
+    
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
@@ -19,7 +20,7 @@ exports.protect = async (req, res, next) => {
     // Find user and check if session is still active
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(401).json({ success: false, message: 'User no longer exists' });
+      return res.status(401).json({ success: false, message: 'User no longer exists in this database' });
     }
 
     // Check if user status is active

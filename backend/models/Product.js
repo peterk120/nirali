@@ -124,4 +124,6 @@ ProductSchema.index({ category: 1 });
 ProductSchema.index({ status: 1 });
 ProductSchema.index({ name: 'text', description: 'text' });
 
-module.exports = mongoose.model('Product', ProductSchema);
+const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+
+module.exports = { Product, ProductSchema };

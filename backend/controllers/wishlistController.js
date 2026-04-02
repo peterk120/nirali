@@ -1,7 +1,6 @@
-const User = require('../models/User');
-
 const getWishlist = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const user = await User.findById(userId).populate('wishlist.productId');
     
@@ -20,6 +19,7 @@ const getWishlist = async (req, res) => {
 
 const addToWishlist = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const { productId } = req.body;
 
@@ -48,6 +48,7 @@ const addToWishlist = async (req, res) => {
 
 const removeFromWishlist = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const userId = req.user.id;
     const { productId } = req.query;
 

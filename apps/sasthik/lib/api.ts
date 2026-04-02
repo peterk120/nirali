@@ -27,6 +27,7 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'X-App-Source': 'sasthik',
     ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };

@@ -1,10 +1,12 @@
-const Order = require('../models/Order');
 const crypto = require('crypto');
 const { logActivity } = require('../utils/logger');
 
 const createOrder = async (req, res) => {
   console.log('📦 LOG: Received Order Request:', JSON.stringify(req.body, null, 2));
   try {
+    const Order = req.dbModels.Order;
+    const User = req.dbModels.User;
+    
     const { 
       items, 
       shippingAddress, 
@@ -22,7 +24,6 @@ const createOrder = async (req, res) => {
     const userId = req.user.id;
 
     // Generate unique order number
-    // Allow custom prefix (e.g. SS for Sasthik, BQ for Boutique)
     const prefix = req.body.orderNumberPrefix || 'ORD';
     const timestamp = Date.now().toString().slice(-6);
     const random = crypto.randomBytes(2).toString('hex').toUpperCase();
@@ -57,12 +58,10 @@ const createOrder = async (req, res) => {
 
     // Clear the user's cart after successful order placement
     try {
-      const User = require('../models/User');
       await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
       console.log(`🛒 Cart cleared for user ${userId} after order #${orderNumber}`);
     } catch (cartError) {
       console.warn(`⚠️ Failed to clear cart for user ${userId}:`, cartError.message);
-      // We don't fail the order if cart clearing fails
     }
 
     res.status(201).json({
@@ -73,9 +72,6 @@ const createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ LOG: Create Order Error:', error);
-    if (error.errors) {
-      console.error('❌ LOG: Validation Errors:', JSON.stringify(error.errors, null, 2));
-    }
     res.status(500).json({
       success: false,
       message: error.message,
@@ -86,6 +82,7 @@ const createOrder = async (req, res) => {
 
 const getMyOrders = async (req, res) => {
   try {
+    const Order = req.dbModels.Order;
     const userId = req.user.id;
     const { page = 1, limit = 10 } = req.query;
 
@@ -124,6 +121,7 @@ const getMyOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
+    const Order = req.dbModels.Order;
     const { 
       page = 1, 
       limit = 10, 
@@ -191,6 +189,7 @@ const getAllOrders = async (req, res) => {
 
 const getOrderById = async (req, res) => {
   try {
+    const Order = req.dbModels.Order;
     const { id } = req.params;
     const order = await Order.findById(id);
 
@@ -218,6 +217,7 @@ const getOrderById = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
   try {
+    const Order = req.dbModels.Order;
     const { id } = req.params;
     const { status, message, updatedBy } = req.body;
 
@@ -249,7 +249,7 @@ const updateOrderStatus = async (req, res) => {
 
     // Log activity
     if (req.user && (req.user.role === 'admin' || req.user.role === 'sales')) {
-      await logActivity(req.user.id, 'update_order', `Updated order #${order.orderNumber} status to ${status}`, order._id);
+      await logActivity(req.dbModels, req.user.id, 'update_order', `Updated order #${order.orderNumber} status to ${status}`, order._id);
     }
 
     res.status(200).json({
@@ -269,6 +269,7 @@ const updateOrderStatus = async (req, res) => {
 
 const verifyPayment = async (req, res) => {
   try {
+    const Order = req.dbModels.Order;
     const { id } = req.params;
     const { transactionId, proofUrl, verifiedBy } = req.body;
 
@@ -309,6 +310,7 @@ const verifyPayment = async (req, res) => {
 
 const bulkUpdateStatus = async (req, res) => {
   try {
+    const Order = req.dbModels.Order;
     const { orderIds, status, message, updatedBy } = req.body;
 
     const updateData = { status };
@@ -339,7 +341,7 @@ const bulkUpdateStatus = async (req, res) => {
 
     // Log activity
     if (req.user && (req.user.role === 'admin' || req.user.role === 'sales')) {
-      await logActivity(req.user.id, 'update_order', `Bulk updated ${results.modifiedCount} orders to ${status}`);
+      await logActivity(req.dbModels, req.user.id, 'update_order', `Bulk updated ${results.modifiedCount} orders to ${status}`);
     }
   } catch (error) {
     res.status(500).json({

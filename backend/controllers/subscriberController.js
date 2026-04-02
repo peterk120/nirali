@@ -1,11 +1,9 @@
-const Subscriber = require('../models/Subscriber');
 const sendEmail = require('../utils/emailService');
 
 // @desc    Subscribe to newsletter
-// @route   POST /api/subscribers/subscribe
-// @access  Public
 exports.subscribe = async (req, res) => {
   try {
+    const Subscriber = req.dbModels.Subscriber;
     const { email } = req.body;
 
     if (!email) {
@@ -62,10 +60,9 @@ exports.subscribe = async (req, res) => {
 };
 
 // @desc    Get all subscribers (Admin only)
-// @route   GET /api/subscribers
-// @access  Private/Admin
 exports.getSubscribers = async (req, res) => {
   try {
+    const Subscriber = req.dbModels.Subscriber;
     const { search } = req.query;
     let query = {};
 
@@ -89,10 +86,9 @@ exports.getSubscribers = async (req, res) => {
 };
 
 // @desc    Unsubscribe
-// @route   POST /api/subscribers/unsubscribe
-// @access  Public
 exports.unsubscribe = async (req, res) => {
   try {
+    const Subscriber = req.dbModels.Subscriber;
     const { email } = req.body;
     
     const subscriber = await Subscriber.findOne({ email });
@@ -119,10 +115,9 @@ exports.unsubscribe = async (req, res) => {
 };
 
 // @desc    Delete subscriber (Admin only)
-// @route   DELETE /api/subscribers/:id
-// @access  Private/Admin
 exports.deleteSubscriber = async (req, res) => {
   try {
+    const Subscriber = req.dbModels.Subscriber;
     const subscriber = await Subscriber.findByIdAndDelete(req.params.id);
 
     if (!subscriber) {
@@ -145,10 +140,9 @@ exports.deleteSubscriber = async (req, res) => {
 };
 
 // @desc    Toggle subscriber status (Admin only)
-// @route   PATCH /api/subscribers/:id/status
-// @access  Private/Admin
 exports.toggleStatus = async (req, res) => {
   try {
+    const Subscriber = req.dbModels.Subscriber;
     const subscriber = await Subscriber.findById(req.params.id);
 
     if (!subscriber) {
@@ -175,10 +169,9 @@ exports.toggleStatus = async (req, res) => {
 };
 
 // @desc    Send bulk email (Admin only)
-// @route   POST /api/subscribers/send-email
-// @access  Private/Admin
 exports.sendBulkEmail = async (req, res) => {
   try {
+    const Subscriber = req.dbModels.Subscriber;
     const { subject, message, subscriberIds } = req.body;
 
     if (!subject || !message) {

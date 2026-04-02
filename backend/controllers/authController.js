@@ -1,4 +1,3 @@
-const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { logActivity } = require('../utils/logger');
@@ -23,11 +22,12 @@ const signToken = (user, jti) => {
 // Register
 exports.register = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const { name, email, password, phone } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+      return res.status(400).json({ success: false, message: 'User already exists in this store' });
     }
 
     const user = await User.create({ name, email, password, phone });
@@ -59,6 +59,7 @@ exports.register = async (req, res) => {
 // Login
 exports.login = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -78,7 +79,7 @@ exports.login = async (req, res) => {
 
     // Log login activity
     if (user.role === 'admin' || user.role === 'sales') {
-      await logActivity(user._id, 'login', `Staff logged in: ${user.email}`);
+      await logActivity(req.dbModels, user._id, 'login', `Staff logged in: ${user.email}`);
     }
 
     const token = signToken(user, jti);
@@ -104,7 +105,8 @@ exports.login = async (req, res) => {
 // Logout (current session)
 exports.logout = async (req, res) => {
   try {
-    const { jti } = req.user; // From authMiddleware
+    const User = req.dbModels.User;
+    const { jti } = req.user; 
     const user = await User.findById(req.user.id);
     
     if (user) {
@@ -113,7 +115,7 @@ exports.logout = async (req, res) => {
       
       // Log logout activity
       if (user.role === 'admin' || user.role === 'sales') {
-        await logActivity(user._id, 'logout', 'Staff logged out');
+        await logActivity(req.dbModels, user._id, 'logout', 'Staff logged out');
       }
     }
 
@@ -126,6 +128,7 @@ exports.logout = async (req, res) => {
 // Logout All
 exports.logoutAll = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const user = await User.findById(req.user.id);
     if (user) {
       user.activeSessions = [];
@@ -140,6 +143,7 @@ exports.logoutAll = async (req, res) => {
 // Get Me
 exports.me = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const user = await User.findById(req.user.id).select('-password');
     res.status(200).json({ success: true, data: user });
   } catch (error) {
@@ -149,6 +153,7 @@ exports.me = async (req, res) => {
 // Update Me
 exports.updateMe = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const { name, phone } = req.body;
     const updates = {};
     if (name) updates.name = name;
@@ -171,6 +176,7 @@ exports.updateMe = async (req, res) => {
 // Get Addresses
 exports.getAddresses = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const user = await User.findById(req.user.id).select('addresses');
     res.status(200).json({ success: true, data: user.addresses });
   } catch (error) {
@@ -181,6 +187,7 @@ exports.getAddresses = async (req, res) => {
 // Add Address
 exports.addAddress = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -203,6 +210,7 @@ exports.addAddress = async (req, res) => {
 // Delete Address
 exports.deleteAddress = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 

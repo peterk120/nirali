@@ -1,13 +1,8 @@
-const Product = require('../models/Product');
-const User = require('../models/User');
-const Order = require('../models/Order');
-const Subscriber = require('../models/Subscriber');
 const { getCSVTemplate, getAllowedStoreTypes } = require('../utils/csv-templates');
 const { FileParser } = require('../utils/csv-parser');
 const { uploadToCloudinary } = require('../utils/cloudinary');
 const JSZip = require('jszip');
 const XLSX = require('xlsx');
-const ActivityLog = require('../models/ActivityLog');
 const { logActivity } = require('../utils/logger');
 
 // GET /api/admin/bulk-upload
@@ -54,6 +49,7 @@ const getBulkUploadTemplate = async (req, res) => {
 // POST /api/admin/bulk-upload
 const handleBulkUpload = async (req, res) => {
   try {
+    const Product = req.dbModels.Product;
     const { storeType } = req.body;
     const csvFile = req.files['csvFile']?.[0];
     const zipFile = req.files['zipFile']?.[0];
@@ -189,15 +185,14 @@ const handleBulkUpload = async (req, res) => {
 };
 
 // @desc    Create a new staff account (Admin only)
-// @route   POST /api/admin/staff
-// @access  Private/Admin
 const createStaff = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const { name, email, password, phone } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+      return res.status(400).json({ success: false, message: 'User already exists in this database' });
     }
 
     const staff = await User.create({
@@ -222,17 +217,16 @@ const createStaff = async (req, res) => {
     });
 
     // Log activity
-    await logActivity(req.user.id, 'staff_created', `Created staff account: ${staff.email}`, staff._id);
+    await logActivity(req.dbModels, req.user.id, 'staff_created', `Created staff account: ${staff.email}`, staff._id);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Get all staff accounts (Admin only)
-// @route   GET /api/admin/staff
-// @access  Private/Admin
 const getStaff = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const staff = await User.find({ role: 'sales' }).select('-password');
     res.status(200).json({
       success: true,
@@ -245,10 +239,9 @@ const getStaff = async (req, res) => {
 };
 
 // @desc    Toggle staff status (Admin only)
-// @route   PATCH /api/admin/staff/:id/status
-// @access  Private/Admin
 const toggleStaffStatus = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const staff = await User.findById(req.params.id);
     if (!staff || staff.role !== 'sales') {
       return res.status(404).json({ success: false, message: 'Staff not found' });
@@ -262,18 +255,20 @@ const toggleStaffStatus = async (req, res) => {
     });
 
     // Log activity
-    await logActivity(req.user.id, 'staff_status_toggled', `${staff.status === 'active' ? 'Activated' : 'Disabled'} staff: ${staff.email}`, staff._id);
+    await logActivity(req.dbModels, req.user.id, 'staff_status_toggled', `${staff.status === 'active' ? 'Activated' : 'Disabled'} staff: ${staff.email}`, staff._id);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Get dashboard statistics
-// @route   GET /api/admin/dashboard-stats
-// @access  Private/Admin or Sales
 const getDashboardStats = async (req, res) => {
   try {
-    const brand = req.query.brand || 'sashti';
+    const Product = req.dbModels.Product;
+    const Order = req.dbModels.Order;
+    const Subscriber = req.dbModels.Subscriber;
+    
+    const brand = req.query.brand || req.dbName.includes('sashti') ? 'sashtik' : 'boutique';
     
     const [
       totalProducts,
@@ -281,8 +276,8 @@ const getDashboardStats = async (req, res) => {
       totalRevenue,
       totalSubscribers
     ] = await Promise.all([
-      Product.countDocuments({ brand }),
-      Order.countDocuments({}), // Assuming we don't have brand in Order yet, or filtering if applicable
+      Product.countDocuments({}), 
+      Order.countDocuments({}), 
       Order.aggregate([
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]).then(result => result[0]?.total || 0),
@@ -290,7 +285,7 @@ const getDashboardStats = async (req, res) => {
     ]);
 
     // Get recent activity
-    const recentProducts = await Product.find({ brand })
+    const recentProducts = await Product.find({})
       .sort({ createdAt: -1 })
       .limit(5)
       .select('name price stock status createdAt');
@@ -319,10 +314,9 @@ const getDashboardStats = async (req, res) => {
 };
 
 // @desc    Update staff account (Admin only)
-// @route   PUT /api/admin/staff/:id
-// @access  Private/Admin
 const updateStaff = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const { name, email, role, status, phone } = req.body;
     const staff = await User.findById(req.params.id);
 
@@ -345,17 +339,16 @@ const updateStaff = async (req, res) => {
     });
 
     // Log activity
-    await logActivity(req.user.id, 'staff_updated', `Updated staff info: ${staff.email}`, staff._id);
+    await logActivity(req.dbModels, req.user.id, 'staff_updated', `Updated staff info: ${staff.email}`, staff._id);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Delete staff account (Admin only)
-// @route   DELETE /api/admin/staff/:id
-// @access  Private/Admin
 const deleteStaff = async (req, res) => {
   try {
+    const User = req.dbModels.User;
     const staff = await User.findById(req.params.id);
     if (!staff || staff.role === 'user') {
       return res.status(404).json({ success: false, message: 'Staff not found' });
@@ -370,17 +363,16 @@ const deleteStaff = async (req, res) => {
     });
 
     // Log activity
-    await logActivity(req.user.id, 'delete_product', `Deleted staff account: ${staffEmail}`, req.params.id);
+    await logActivity(req.dbModels, req.user.id, 'delete_product', `Deleted staff account: ${staffEmail}`, req.params.id);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Get activity logs
-// @route   GET /api/admin/activity-logs
-// @access  Private/Admin
 const getActivityLogs = async (req, res) => {
   try {
+    const ActivityLog = req.dbModels.ActivityLog;
     const { staffId, action, startDate, endDate, page = 1, limit = 20 } = req.query;
     
     const query = {};
@@ -413,10 +405,10 @@ const getActivityLogs = async (req, res) => {
 };
 
 // @desc    Get staff performance summary
-// @route   GET /api/admin/staff-performance
-// @access  Private/Admin
 const getStaffPerformance = async (req, res) => {
   try {
+    const User = req.dbModels.User;
+    const ActivityLog = req.dbModels.ActivityLog;
     const staffList = await User.find({ role: 'sales' }).select('name email status lastLoginAt lastActiveAt');
     
     const performanceData = await Promise.all(staffList.map(async (staff) => {
