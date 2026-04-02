@@ -1,45 +1,20 @@
-import './globals.css';
 import type { Metadata } from 'next';
-import { Playfair_Display, DM_Sans } from 'next/font/google';
-import Providers from '../components/Providers';
+import { cormorantGaramond, dmSans } from '@/lib/fonts';
+import './globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import WhatsAppButton from '../components/WhatsAppButton';
-import React from 'react';
-
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-heading',
-  weight: ['400', '600', '700'],
-});
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-body',
-  weight: ['400', '500', '600'],
-});
+import AnnouncementBar from '../components/AnnouncementBar';
+import BackToTop from '../components/BackToTop';
+import Providers from '../components/Providers';
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Sasthik',
-    default: 'Sasthik',
+    default: 'Sashti Sparkle | Premium Imitation Jewellery',
+    template: '%s | Sashti Sparkle'
   },
-  description: 'Traditional and contemporary products at Sasthik. Quality craftsmanship and authentic designs.',
-  keywords: ['traditional products', 'handicrafts', 'Indian products', 'artisan goods', 'authentic designs'],
-  openGraph: {
-    title: 'Sasthik',
-    description: 'Traditional and contemporary products at Sasthik. Quality craftsmanship and authentic designs.',
-    images: ['/og-image.jpg'], // Placeholder for brand image
-    type: 'website',
-    url: 'https://www.sasthik.com',
-  },
-  themeColor: '#1A7A7A', // brand-teal
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
-  manifest: '/manifest.json', // Placeholder for PWA manifest
+  description: 'Look Royal. Pay Less. Premium imitation & costume jewellery for every occasion. Tarnish-resistant, nickel-free, and skin-friendly.',
+  keywords: ['imitation jewellery', 'costume jewellery', 'fashion jewellery', 'bridal jewellery', 'kundan', 'oxidised', 'temple jewellery', 'sashti sparkle'],
 };
 
 export default function RootLayout({
@@ -48,17 +23,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html 
-      lang="en" 
-      className={`${playfairDisplay.variable} ${dmSans.variable} theme-light`}
-      suppressHydrationWarning
-    >
-      <body className="min-h-screen bg-background font-body antialiased">
+    <html lang="en" className={`${cormorantGaramond.variable} ${dmSans.variable} scroll-smooth`} suppressHydrationWarning>
+      <body className="font-body bg-white text-brand-dark min-h-screen flex flex-col">
         <Providers>
+          <AnnouncementBar />
           <Navbar />
-          {children}
+          <main className="flex-grow">
+            {children}
+          </main>
           <Footer />
           <WhatsAppButton />
+          <BackToTop />
         </Providers>
       </body>
     </html>

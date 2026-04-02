@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { verifyToken } from '../../../lib/auth';
+import { verifyToken, UserJwtPayload } from '../../../lib/auth';
 import AdminWrapper from '../AdminWrapper';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@nirali-sai/ui';
@@ -19,6 +19,7 @@ export default function AdminDashboardPage() {
   });
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [recentProducts, setRecentProducts] = useState<any[]>([]);
+  const [user, setUser] = useState<UserJwtPayload | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,11 +29,14 @@ export default function AdminDashboardPage() {
     const checkAuth = async () => {
       try {
         const payload = await verifyToken(token);
-        if (payload.role !== 'admin') {
+        if (payload.role !== 'admin' && payload.role !== 'sales') {
           router.push('/');
         } else {
+          setUser(payload);
           try {
-            const response = await fetch('/api/admin/dashboard');
+            const response = await fetch('/api/admin/dashboard', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
             const result = await response.json();
             if (result.success) {
               setStats(result.data.stats);
@@ -56,9 +60,14 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   const handleLogout = () => {
+    const role = user?.role;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    router.push('/');
+    if (role === 'admin' || role === 'sales') {
+      router.push('/admin/login');
+    } else {
+      router.push('/');
+    }
   };
 
   if (loading) {
@@ -78,11 +87,12 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const statCards = [
+  const allStatCards = [
     {
       label: 'Total Products',
       value: stats.totalProducts,
       growth: stats.ordersGrowth,
+      roles: ['admin', 'sales'],
       icon: (
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" style={{width:15,height:15}}>
           <path d="M4 7h12M4 7a2 2 0 01-2-2V4h16v1a2 2 0 01-2 2M4 7v9a2 2 0 002 2h8a2 2 0 002-2V7M8 12h4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -93,6 +103,7 @@ export default function AdminDashboardPage() {
       label: 'Total Bookings',
       value: stats.totalBookings,
       growth: stats.ordersGrowth,
+      roles: ['admin', 'sales'],
       icon: (
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" style={{width:15,height:15}}>
           <rect x="2" y="4" width="16" height="13" rx="2"/>
@@ -101,9 +112,10 @@ export default function AdminDashboardPage() {
       )
     },
     {
-      label: 'Support Tickets',
-      value: stats.totalSupportTickets,
+      label: 'Subscribers',
+      value: stats.totalSupportTickets, // Reusing for demo if needed, but let's keep it simple
       growth: 5,
+      roles: ['admin'],
       icon: (
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" style={{width:15,height:15}}>
           <path d="M10 2C5.58 2 2 5.13 2 9c0 2.3 1.3 4.33 3.33 5.6L5 17l3.12-1.56C8.73 15.81 9.36 16 10 16c4.42 0 8-3.13 8-7s-3.58-7-8-7z" strokeLinejoin="round"/>
@@ -116,6 +128,7 @@ export default function AdminDashboardPage() {
       value: null,
       valueFormatted: `₹${stats.revenue.toLocaleString()}`,
       growth: stats.revenueGrowth,
+      roles: ['admin'],
       icon: (
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" style={{width:15,height:15}}>
           <circle cx="10" cy="10" r="8"/>
@@ -125,12 +138,16 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  const quickActions = [
-    { label: 'Manage Products', href: '/admin/products', primary: true },
-    { label: 'Manage Bookings', href: '/admin/bookings', primary: false },
-    { label: 'Support Tickets', href: '/admin/support', primary: false },
-    { label: 'Manage Products', href: '/admin/products', primary: false },
+  const statCards = allStatCards.filter(s => user && s.roles.includes(user.role));
+
+  const allQuickActions = [
+    { label: 'Manage Products', href: '/admin/products', primary: true, roles: ['admin', 'sales'] },
+    { label: 'View Orders', href: '/admin/orders', primary: false, roles: ['admin', 'sales'] },
+    { label: 'View Subscribers', href: '/admin/subscribers', primary: false, roles: ['admin'] },
+    { label: 'Manage Staff', href: '/admin/staff', primary: false, roles: ['admin'] },
   ];
+
+  const quickActions = allQuickActions.filter(a => user && a.roles.includes(user.role));
 
   return (
     <AdminWrapper>
@@ -473,8 +490,8 @@ export default function AdminDashboardPage() {
             <div className="adm-header fu">
               <div>
                 <p className="adm-eyebrow">Admin Panel</p>
-                <h1 className="adm-title">Dashboard <em>overview</em></h1>
-                <p className="adm-sub">Welcome to the admin dashboard</p>
+                <h1 className="adm-title">{user?.role === 'admin' ? 'Admin' : 'Sales'} <em>dashboard</em></h1>
+                <p className="adm-sub">Welcome back, {user?.email.split('@')[0]}</p>
               </div>
               <button className="logout-btn" onClick={handleLogout}>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:12,height:12}}>

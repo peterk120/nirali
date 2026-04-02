@@ -5,10 +5,28 @@
 :root {
   --brand-teal: #1A7A7A;
   --brand-rose-gold: #B76E79;
-  --bg-white: #FFFFFF;
   --brand-dark: #1A1A2E;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
   --font-heading: 'Playfair Display', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
+}
+
+.text-brand-teal {
+  color: var(--brand-teal);
+}
+
+.bg-brand-teal {
+  background-color: var(--brand-teal);
+}
+
+.font-playfair {
+  font-family: var(--font-heading);
+}
+
+.font-dm-sans {
+  font-family: var(--font-body);
 }
 
 * {
@@ -31,4 +49,74 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE UTILITIES & BASE ENHANCEMENTS
+   Mobile-first responsive foundation
+   ──────────────────────────────────────────────────────────────── */
+
+/* Ensure all images are responsive by default */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent horizontal scroll globally */
+html {
+  overflow-x: hidden;
+}
+
+/* Responsive container padding */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Responsive typography base */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Slightly smaller base on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 13px; /* Even smaller for very small screens */
+  }
 }

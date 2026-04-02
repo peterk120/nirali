@@ -95,25 +95,40 @@ export class FileParser {
     }
 
     // Validate headers
-    const csvHeaders = Object.keys(records[0]);
+    const rawHeaders = Object.keys(records[0]);
+    const csvHeaders = rawHeaders.map(h => h.trim());
     const templateHeaders = template.headers;
     
-    const missingHeaders = template.required.filter(header => !csvHeaders.includes(header));
+    // Create a mapping of normalized headers to template headers
+    const normalizedToTemplateMap: Record<string, string> = {};
+    templateHeaders.forEach(th => {
+      normalizedToTemplateMap[th.trim().toLowerCase()] = th;
+    });
+
+    const validatedRecords = records.map(record => {
+      const newRecord: any = {};
+      Object.keys(record).forEach(key => {
+        const normalizedKey = key.trim().toLowerCase();
+        const templateKey = normalizedToTemplateMap[normalizedKey];
+        if (templateKey) {
+          newRecord[templateKey] = record[key];
+        } else {
+          newRecord[key] = record[key];
+        }
+      });
+      return newRecord;
+    });
+
+    const processedHeaders = Object.keys(validatedRecords[0]);
+    const missingHeaders = template.required.filter(header => !processedHeaders.includes(header));
+    
     if (missingHeaders.length > 0) {
       errors.push(`Missing required headers: ${missingHeaders.join(', ')}`);
-    }
-
-    const unexpectedHeaders = csvHeaders.filter(header => !templateHeaders.includes(header));
-    if (unexpectedHeaders.length > 0) {
-      warnings.push(`Unexpected headers found: ${unexpectedHeaders.join(', ')}. These will be ignored.`);
-    }
-
-    if (errors.length > 0) {
       return { products, errors, warnings };
     }
 
     // Process each record
-    records.forEach((record: any, index: number) => {
+    validatedRecords.forEach((record: any, index: number) => {
       try {
         const product = this.validateAndTransformRecord(record, template, index + 1);
         

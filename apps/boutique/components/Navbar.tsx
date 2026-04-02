@@ -135,6 +135,13 @@ export default function Navbar() {
     window.location.href = '/';
   };
 
+  const handleLogoutAll = () => {
+    const { logoutAll } = useAuthStore.getState();
+    logoutAll();
+    setShowUserMenu(false);
+    window.location.href = '/';
+  };
+
   return (
     <>
       {/* ── Google Fonts ── */}
@@ -510,6 +517,30 @@ export default function Navbar() {
                       >
                         <LogOut size={13} />
                         Logout
+                      </button>
+                      <button
+                        onClick={handleLogoutAll}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          width: '100%',
+                          padding: '10px 20px',
+                          background: 'none',
+                          border: 'none',
+                          fontFamily: "'Jost', sans-serif",
+                          fontSize: 10,
+                          letterSpacing: '0.08em',
+                          color: '#A0525E',
+                          opacity: 0.7,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F5E6E8'}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                      >
+                        <LogOut size={11} />
+                        Logout All Devices
                       </button>
                     </motion.div>
                   )}

@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'react-hot-toast';
+import QuickViewModal from './QuickViewModal';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           }}
         />
       </ThemeProvider>
+      <QuickViewModal />
     </QueryClientProvider>
   );
 }

@@ -138,100 +138,86 @@ const PaymentPage = () => {
         await new Promise(resolve => setTimeout(resolve, PAYMENT_DELAY_MS));
         
         console.log('✅ Payment simulated successfully');
-        console.log('📦 Calling checkout API with', itemsToBook.length, 'items');
+        console.log('📦 Calling standardized createOrder API with', itemsToBook.length, 'items');
         
-        // Format phone number - remove country code and spaces for validation
-        const formatPhone = (phone: string | undefined) => {
-          if (!phone) return '9876543210';
-          // Remove +91, spaces, dashes, and keep only digits
-          const cleaned = phone.replace(/^[+]?91/, '').replace(/[\s-]/g, '');
-          // If result is not 10 digits, use fallback
-          return /^[6-9]\d{9}$/.test(cleaned) ? cleaned : '9876543210';
-        };
-        
-        const formattedPhone = formatPhone(userProfile?.phone);
-        
-        console.log('👤 Customer Details:', {
-          name: userProfile?.name || 'Customer Name',
-          email: userProfile?.email || 'customer@example.com',
-          phone: formattedPhone,
-          address: userProfile?.address || '123 Main Street, City, State 123456'
-        });
-        
-        // Call checkout API directly with simulated payment details
-        const checkoutRes = await fetch('/api/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            items: itemsToBook,
-            customerDetails: {
-              name: userProfile?.name || 'Customer Name',
-              email: userProfile?.email || 'customer@example.com',
-              phone: formattedPhone,
-              address: userProfile?.address || '123 Main Street, City, State 123456'
-            },
-            paymentDetails: {
-              // Simulated payment signature for development
-              razorpayOrderId: `SIM_ORD_${Date.now()}`,
-              razorpayPaymentId: `SIM_PAY_${Date.now()}`,
-              razorpaySignature: SIMULATED_SIGNATURE
-            },
-            bookingPeriod: {
-              startDate: selectedDate,
-              endDate: returnDate,
-              days: rentalDuration || 3
-            },
-            globalSpecialInstructions: specialInstructions || ''
-          })
-        });
+        // Import createOrder from @/lib/api
+        const { createOrder } = await import('../../../../lib/api');
 
-        console.log('📝 Server response status:', checkoutRes.status);
-        const rawText = await checkoutRes.text();
-        console.log('📝 Raw server response:', rawText);
-        
-        let checkoutResult;
-        try {
-          checkoutResult = JSON.parse(rawText);
-        } catch (parseError) {
-          console.error('Failed to parse response:', parseError);
-          throw new Error('Server returned invalid JSON');
-        }
-        
-        console.log('❌ Checkout error details:', checkoutResult.details);
-        console.log('❌ Checkout error message:', checkoutResult.error);
+        // Map items to backend format
+        const backendItems = itemsToBook.map(item => ({
+          productId: item.productId || item.id,
+          productName: item.name,
+          productImage: item.image || item.images?.[0] || '/placeholder-product.jpg',
+          quantity: item.quantity || 1,
+          unitPrice: item.price || item.rentalPricePerDay || 0,
+          totalPrice: (item.price || item.rentalPricePerDay || 0) * (item.quantity || 1) * (rentalDuration || 1),
+          rentalDays: rentalDuration || 1,
+          startDate: selectedDate,
+          endDate: returnDate,
+          size: selectedSize || item.size || undefined
+        }));
+
+        // Format address for backend
+        const shippingAddress = {
+          firstName: userProfile?.name?.split(' ')[0] || 'Customer',
+          lastName: userProfile?.name?.split(' ').slice(1).join(' ') || 'Name',
+          street: userProfile?.address || '123 Main Street',
+          city: 'City',
+          state: 'State',
+          country: 'India',
+          pincode: '123456',
+          phone: userProfile?.phone || '9876543210',
+          email: userProfile?.email || 'customer@example.com'
+        };
+
+        const tax = Math.round(totalPrice * 0.18);
+        const shippingCost = 0;
+        const discount = 0;
+        const subtotal = totalPrice;
+        const finalTotal = subtotal + tax + shippingCost - discount;
+
+        // Call standardized createOrder
+        const checkoutResult = await createOrder({
+          items: backendItems,
+          shippingAddress,
+          billingAddress: shippingAddress,
+          paymentMethod: 'card', // For simulation
+          subtotal,
+          tax,
+          shippingCost,
+          discount,
+          total: finalTotal,
+          notes: specialInstructions || '',
+          orderNumberPrefix: 'BQ' // Boutique Quest
+        });
 
         if (!checkoutResult.success) {
-          throw new Error(checkoutResult.error || 'Checkout failed');
+          throw new Error(checkoutResult.error?.message || 'Checkout failed');
         }
 
-        console.log('✅ Orders created:', checkoutResult.orders);
-
-        // Calculate exact total paid from checkout response
-        // The API returns order IDs, so we use our calculated totalPayable which was sent
-        const actualTotalPaid = totalPayable; // This is what was charged
-        setExactTotalPaid(actualTotalPaid);
+        console.log('✅ Order created:', checkoutResult.data?.orderNumber);
 
         // Success - update state
         setAdvancePaid(advanceAmount);
         setDepositPaid(depositAmount);
-        setBookingId(checkoutResult.orders[0] || 'Confirmed');
+        setBookingId(checkoutResult.data?.orderNumber || 'Confirmed');
         setPaymentCompleted(true);
 
         // Refresh cart and bookings
-        const { useCartStore } = await import('../../../../lib/stores/cartStore');
-        useCartStore.getState().fetchCart();
+        try {
+          const { useCartStore } = await import('../../../../lib/stores/cartStore');
+          useCartStore.getState().fetchCart();
+        } catch (e) { console.warn('Cart store not available'); }
         
-        const { useAuthStore } = await import('../../../../lib/stores/authStore');
-        useAuthStore.getState().fetchBookingsCount();
+        try {
+          const { useAuthStore } = await import('../../../../lib/stores/authStore');
+          useAuthStore.getState().fetchBookingsCount();
+        } catch (e) { console.warn('Auth store fetchBookingsCount failed'); }
 
         // Show success modal IMMEDIATELY (appears right after processing delay)
         setShowSuccessModal(true);
         
         // Redirect to bookings page after modal countdown completes
-        // Total time from Pay Now click: ~9 seconds (1.5s delay + 8s modal countdown)
         setTimeout(() => {
           router.push('/dashboard/bookings');
         }, REDIRECT_DELAY_MS);

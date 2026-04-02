@@ -23,7 +23,7 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
   
   // Get JWT token from wherever it's stored (cookies, localStorage, etc.)
   // In a real app, you might use a cookie library or next-auth
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -86,17 +86,20 @@ export async function register(userData: {
   });
 }
 
+export async function login(credentials: { 
+  email: string; 
+  password: string 
+}): Promise<ApiResponse<{ user: User; token: string }>> {
+  return fetcher('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
+}
+
 export async function loginWithPhone(phone: string): Promise<ApiResponse<{ sessionId: string }>> {
   return fetcher('/auth/login/phone', {
     method: 'POST',
     body: JSON.stringify({ phone }),
-  });
-}
-
-export async function verifyOTP(sessionId: string, otp: string): Promise<ApiResponse<{ user: User; token: string }>> {
-  return fetcher('/auth/verify-otp', {
-    method: 'POST',
-    body: JSON.stringify({ sessionId, otp }),
   });
 }
 
@@ -115,6 +118,12 @@ export async function refreshToken(): Promise<ApiResponse<{ token: string }>> {
 
 export async function logout(): Promise<ApiResponse<void>> {
   return fetcher('/auth/logout', {
+    method: 'POST',
+  });
+}
+
+export async function logoutAll(): Promise<ApiResponse<void>> {
+  return fetcher('/auth/logout-all', {
     method: 'POST',
   });
 }
@@ -265,7 +274,7 @@ export async function createJewelleryBooking(bookingData: {
   });
 }
 
-// Sasthik API functions
+// Sashti Sparkle API functions
 export async function getProducts(filters?: {
   category?: string;
   priceRange?: [number, number];
@@ -297,15 +306,17 @@ export async function getProductBySlug(slug: string): Promise<ApiResponse<Produc
 }
 
 export async function createOrder(orderData: {
-  items: Array<{
-    productId: string;
-    quantity: number;
-    variantId?: string;
-  }>;
-  shippingAddress: Address;
-  billingAddress: Address;
-  paymentMethod: 'card' | 'upi' | 'netbanking' | 'cod' | 'wallet';
+  items: Array<any>;
+  shippingAddress: any;
+  billingAddress: any;
+  paymentMethod: string;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  discount: number;
+  total: number;
   couponCode?: string;
+  notes?: string;
 }): Promise<ApiResponse<Order>> {
   return fetcher('/orders', {
     method: 'POST',
@@ -327,13 +338,78 @@ export async function getMyOrders(filters?: {
     });
   }
   const queryString = params.toString();
-  const endpoint = `/orders/me${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/orders/my-orders${queryString ? `?${queryString}` : ''}`;
   
   return fetcher(endpoint);
 }
 
+export async function getOrderById(id: string): Promise<ApiResponse<Order>> {
+  return fetcher(`/orders/${id}`);
+}
+
 export async function trackOrder(orderId: string): Promise<ApiResponse<Order>> {
   return fetcher(`/orders/${orderId}/track`);
+}
+
+// Admin Order API functions
+export async function getAllOrders(filters?: {
+  status?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}): Promise<ApiResponse<PaginatedResponse<Order>>> {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, String(value));
+      }
+    });
+  }
+  const queryString = params.toString();
+  return fetcher(`/orders${queryString ? `?${queryString}` : ''}`);
+}
+
+export async function getOrderByIdAdmin(id: string): Promise<ApiResponse<Order>> {
+  return fetcher(`/orders/${id}`);
+}
+
+export async function updateOrderStatus(id: string, data: { 
+  status: string; 
+  message?: string; 
+  updatedBy?: string; 
+}): Promise<ApiResponse<Order>> {
+  return fetcher(`/orders/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function verifyOrderPayment(id: string, data: {
+  transactionId: string;
+  proofUrl?: string;
+  verifiedBy?: string;
+}): Promise<ApiResponse<Order>> {
+  return fetcher(`/orders/${id}/verify-payment`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function bulkUpdateOrderStatus(data: {
+  orderIds: string[];
+  status: string;
+  message?: string;
+  updatedBy?: string;
+}): Promise<ApiResponse<any>> {
+  return fetcher('/orders/bulk-status', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function applyCoupon(code: string, cartTotal: number): Promise<ApiResponse<Coupon>> {

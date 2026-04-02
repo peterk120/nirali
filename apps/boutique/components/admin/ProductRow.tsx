@@ -23,6 +23,7 @@ interface Product {
 interface ProductRowProps {
   product: Product;
   isSelected: boolean;
+  userRole?: string;
   onSelect: (id: string, selected: boolean) => void;
   onEdit: (id: string) => void;
   onView: (id: string) => void;
@@ -33,6 +34,7 @@ interface ProductRowProps {
 export function ProductRow({
   product,
   isSelected,
+  userRole,
   onSelect,
   onEdit,
   onView,
@@ -125,15 +127,17 @@ export function ProductRow({
             <Eye className="w-3 h-3 mr-1" />
             View
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="h-7 px-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
-          >
-            <Trash2 className="w-3 h-3 mr-1" />
-            Delete
-          </Button>
+          {userRole === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              className="h-7 px-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
+            >
+              <Trash2 className="w-3 h-3 mr-1" />
+              Delete
+            </Button>
+          )}
         </div>
       </td>
 
@@ -210,14 +214,16 @@ export function ProductRow({
           >
             <Edit className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="text-red-600 hover:text-red-800"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          {userRole === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              className="text-red-600 hover:text-red-800"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </td>
     </tr>

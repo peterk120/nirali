@@ -94,6 +94,29 @@ export const CSV_TEMPLATES = {
     },
     displayName: 'Sasthik Shop'
   },
+  sashti: {
+    fileName: 'sashti-products-template.csv',
+    headers: [
+      'productName',
+      'description',
+      'category', 
+      'price',
+      'stock',
+      'imageName'
+    ],
+    required: [
+      'productName',
+      'description',
+      'category',
+      'price', 
+      'stock',
+      'imageName'
+    ],
+    attributesMapping: {
+      sku: 'sku'
+    },
+    displayName: 'Sashti Sparkle'
+  },
   tamilsmakeover: {
     fileName: 'tamilsmakeover-products-template.csv',
     headers: [

@@ -27,11 +27,11 @@ const premiumStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
   :root {
-    --brand-rose: #e11d48;
-    --brand-rose-light: #fce7ef;
-    --brand-rose-dark: #9f1239;
-    --gold: #c9a84c;
-    --gold-light: #f5edd8;
+    --brand-rose: ${process.env.NEXT_PUBLIC_PRIMARY_COLOR || '#e11d48'};
+    --brand-rose-light: ${process.env.NEXT_PUBLIC_PRIMARY_COLOR ? 'rgba(26, 122, 122, 0.08)' : '#fce7ef'};
+    --brand-rose-dark: ${process.env.NEXT_PUBLIC_PRIMARY_COLOR || '#9f1239'};
+    --gold: ${process.env.NEXT_PUBLIC_ACCENT_COLOR || '#B76E79'};
+    --gold-light: ${process.env.NEXT_PUBLIC_ACCENT_COLOR ? 'rgba(183, 110, 121, 0.12)' : '#f5edd8'};
     --ink: #0f0e0d;
     --ink-60: #5a5755;
     --ink-30: #b0adaa;
@@ -225,6 +225,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | undefined>(undefined);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -244,12 +245,13 @@ export default function AdminProductsPage() {
     const checkAuthAndFetchProducts = async () => {
       try {
         const payload = await verifyToken(token);
-        if (payload.role !== 'admin') {
+        if (payload.role !== 'admin' && payload.role !== 'sales') {
           setAuthLoading(false);
           setIsAuthenticated(false);
           router.push('/');
         } else {
           setIsAuthenticated(true);
+          setUserRole(payload.role);
           setAuthLoading(false);
           const response = await fetch('/api/products');
           const result = await response.json();
@@ -368,7 +370,7 @@ export default function AdminProductsPage() {
 
   const categories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
   const productTypes = ['Dress', 'Jewellery', 'Product', 'Service'];
-  const brands = ['Boutique', 'Bridal Jewels', 'Sasthik', 'Tamilsmakeover'];
+  const brands = ['Boutique', 'Bridal Jewels', 'Sasthik', 'Tamilsmakeover', 'Sashti Sparkle'];
   const stockStatuses = ['In Stock', 'Out of Stock', 'Low Stock'];
 
   // ── Auth loading ──────────────────────────────────────────────────────────
@@ -394,7 +396,7 @@ export default function AdminProductsPage() {
         <AdminWrapper>
           <div className="loading-screen">
             <div className="loading-spinner" />
-            <p className="loading-text">Loading products</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{process.env.NEXT_PUBLIC_BRAND_DISPLAY_NAME || 'Admin'} — Products</h1>
           </div>
         </AdminWrapper>
       </>
@@ -488,6 +490,7 @@ export default function AdminProductsPage() {
               <ProductTable
                 products={products}
                 selectedIds={selectedIds}
+                userRole={userRole}
                 onSelectAll={handleSelectAll}
                 onSelectProduct={handleSelectProduct}
                 onEdit={handleEdit}

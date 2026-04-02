@@ -4,7 +4,7 @@ export interface IProduct extends Document {
   name: string;
   price: number;
   category: string;
-  brand: 'boutique' | 'bridal-jewels' | 'sasthik' | 'tamilsmakeover';
+  brand: 'boutique' | 'bridal-jewels' | 'sasthik' | 'tamilsmakeover' | 'sashti';
   color?: string;
   size?: string; // Legacy field for backwards compatibility
   sizes?: Array<{
@@ -88,7 +88,7 @@ const ProductSchema: Schema = new Schema({
   },
   brand: {
     type: String,
-    enum: ['boutique', 'bridal-jewels', 'sasthik', 'tamilsmakeover'],
+    enum: ['boutique', 'bridal-jewels', 'sasthik', 'tamilsmakeover', 'sashti'],
     required: true,
     index: true
   },
@@ -104,7 +104,7 @@ const ProductSchema: Schema = new Schema({
   }],
   storeType: {
     type: String,
-    enum: ['boutique', 'jewellery', 'sasthik', 'tamilsmakeover'],
+    enum: ['boutique', 'jewellery', 'sasthik', 'tamilsmakeover', 'sashti'],
     required: true,
     index: true
   },

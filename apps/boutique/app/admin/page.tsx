@@ -18,11 +18,12 @@ export default function AdminPage() {
     const checkAuth = async () => {
       try {
         const payload = await verifyToken(token);
-        if (payload.role !== 'admin') {
-          router.push('/'); // Redirect non-admins to home
-        } else {
-          // Redirect to dashboard when visiting /admin directly
+        if (payload.role === 'admin') {
           router.push('/admin/dashboard');
+        } else if (payload.role === 'sales') {
+          router.push('/admin/products');
+        } else {
+          router.push('/'); // Redirect non-admins to home
         }
       } catch (error) {
         // If token is invalid, redirect to login

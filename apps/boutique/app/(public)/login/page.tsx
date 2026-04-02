@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../../lib/stores/authStore';
+import { login as apiLogin, register as apiRegister } from '../../../lib/api';
 
 const authSchema = z.object({
   name: z.string().optional(),
@@ -47,7 +48,11 @@ export default function LoginPage() {
     if (token && userStr) {
       try {
         const u = JSON.parse(userStr);
-        router.push(u.role === 'admin' ? '/admin' : '/');
+        if (u.role === 'admin' || u.role === 'sales') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
       } catch (_) { }
     }
   }, [router]);
@@ -59,32 +64,32 @@ export default function LoginPage() {
         return;
       }
 
-      const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = isRegistering 
+        ? await apiRegister({ name: data.name!, email: data.email, password: data.password, phone: data.phone || '' })
+        : await apiLogin({ email: data.email, password: data.password });
 
-      const resData = await response.json();
-
-      if (response.ok && resData.success) {
-        localStorage.setItem('token', resData.data.token);
-        localStorage.setItem('user', JSON.stringify(resData.data.user));
+      if (response.success && response.data) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
 
         // Update global Zustand store
-        login(resData.data.user);
+        login(response.data.user as any);
 
         if (isRegistering) {
           toast.success('Account created successfully!');
         } else {
-          toast.success(resData.data.user.role === 'admin' ? 'Welcome back, Admin!' : 'Welcome back!');
+          toast.success(response.data.user.role === 'admin' || response.data.user.role === 'sales' ? 'Welcome back, Staff!' : 'Welcome back!');
         }
 
-        router.push(resData.data.user.role === 'admin' ? '/admin' : '/');
+        if (response.data.user.role === 'admin' || response.data.user.role === 'sales') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
       } else {
-        setError('root', { message: resData.error || 'Invalid credentials' });
-        toast.error(resData.error || 'Invalid credentials');
+        const msg = response.error?.message || response.message || 'Invalid credentials';
+        setError('root', { message: msg });
+        toast.error(msg);
       }
     } catch (err) {
       setError('root', { message: 'An error occurred during authentication' });
@@ -392,7 +397,8 @@ export default function LoginPage() {
               {/* Hint */}
               <p style={{ fontSize: 11, color: '#D4A0A8', textAlign: 'center', letterSpacing: '0.04em', lineHeight: 1.7 }}>
                 User: test@gmail.com · 123<br />
-                Admin: admin@gmail.com · 123
+                Admin: admin@gmail.com · 123<br />
+                Sales: sales@gmail.com · 123
               </p>
             </form>
 

@@ -371,9 +371,9 @@ export default function NewProductPage() {
                   <input type="number" id="stock" name="stock" min="0" className="field-input" placeholder="0" />
                 </div>
 
-                {/* Hidden fields for brand and storeType - defaults to 'boutique' */}
-                <input type="hidden" id="brand" name="brand" value="boutique" />
-                <input type="hidden" id="storeType" name="storeType" value="boutique" />
+                {/* Hidden fields for brand and storeType - defaults to environment values */}
+                <input type="hidden" id="brand" name="brand" value={process.env.NEXT_PUBLIC_BRAND || "boutique"} />
+                <input type="hidden" id="storeType" name="storeType" value={process.env.NEXT_PUBLIC_BRAND || "boutique"} />
 
                 <div className="field full">
                   <label className="field-label" htmlFor="description">Description <span>*</span></label>

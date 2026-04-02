@@ -15,18 +15,18 @@ const config: Config = {
       },
       colors: {
         'brand-rose': {
-          50: '#FFF5F7',
-          100: '#FFE8ED',
-          500: '#C0436A',
-          600: '#A83860',
-          700: '#8F2D52',
+          50: 'var(--brand-rose-light, #FFF5F7)',
+          100: 'var(--brand-rose-light, #FFE8ED)',
+          500: 'var(--brand-rose, #C0436A)',
+          600: 'var(--brand-rose-dark, #A83860)',
+          700: 'var(--brand-rose-dark, #8F2D52)',
         },
         'brand-gold': {
-          50: '#FDF8ED',
-          100: '#FBF1D5',
-          500: '#C9922A',
-          600: '#B07E22',
-          700: '#986B1A',
+          50: 'var(--gold-light, #FDF8ED)',
+          100: 'var(--gold-light, #FBF1D5)',
+          500: 'var(--gold, #C9922A)',
+          600: 'var(--gold, #B07E22)',
+          700: 'var(--gold, #986B1A)',
         },
         'brand-ivory': {
           DEFAULT: '#FAF7F0',

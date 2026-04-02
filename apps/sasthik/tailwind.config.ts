@@ -8,33 +8,18 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        heading: ['Playfair Display', 'Georgia', 'serif'],
-        body: ['DM Sans', 'system-ui', 'sans-serif'],
-        ui: ['Poppins', 'system-ui', 'sans-serif'],
-      },
       colors: {
-        'brand-teal': {
-          50: '#F0FAFA',
-          100: '#E1F5F5',
-          500: '#1A7A7A',
-          600: '#156363',
-          700: '#104C4C',
-        },
-        'brand-rose-gold': {
-          50: '#FEF8F9',
-          100: '#FCF1F3',
-          500: '#B76E79',
-          600: '#9E5C66',
-          700: '#854A53',
-        },
-        'bg-white': {
-          DEFAULT: '#FFFFFF',
-        },
-        'brand-dark': {
-          DEFAULT: '#1A1A2E',
-          light: '#2D2D4A',
-        },
+        'brand-teal': '#1A7A7A',
+        'brand-rose-gold': '#B76E79',
+        'brand-dark': '#1A1A2E',
+        'teal-light': '#F0FAFA',
+        'teal-medium': '#E1F5F5',
+        'rose-light': '#FEF8F9',
+        'rose-medium': '#FCF1F3',
+      },
+      fontFamily: {
+        heading: ['var(--font-heading)', 'serif'],
+        body: ['var(--font-body)', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fade-in 0.5s ease-out',

@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { verifyToken } from '../../lib/auth';
+import { verifyToken, UserJwtPayload } from '../../lib/auth';
 import Link from 'next/link';
-import { Menu, X, Home, Calendar, Package, LifeBuoy, Archive, LogOut, ChevronRight } from 'lucide-react';
+import { Menu, X, Home, Calendar, Package, LifeBuoy, Archive, LogOut, ChevronRight, Users, ShieldCheck, Mail, BarChart3 } from 'lucide-react';
 
 // ─── Premium styles ────────────────────────────────────────────────────────
 const wrapperStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
   :root {
-    --brand-rose: #e11d48;
-    --brand-rose-light: #fce7ef;
-    --brand-rose-dark: #9f1239;
-    --gold: #c9a84c;
-    --gold-light: #f5edd8;
+    --brand-rose: ${process.env.NEXT_PUBLIC_PRIMARY_COLOR || '#e11d48'};
+    --brand-rose-light: ${process.env.NEXT_PUBLIC_PRIMARY_COLOR ? 'rgba(26, 122, 122, 0.08)' : '#fce7ef'};
+    --brand-rose-dark: ${process.env.NEXT_PUBLIC_PRIMARY_COLOR || '#9f1239'};
+    --gold: ${process.env.NEXT_PUBLIC_ACCENT_COLOR || '#B76E79'};
+    --gold-light: ${process.env.NEXT_PUBLIC_ACCENT_COLOR ? 'rgba(183, 110, 121, 0.12)' : '#f5edd8'};
     --ink: #0f0e0d;
     --ink-60: #5a5755;
     --ink-30: #b0adaa;
@@ -278,6 +278,7 @@ export default function AdminWrapper({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState<UserJwtPayload | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -291,11 +292,12 @@ export default function AdminWrapper({ children }: { children: React.ReactNode }
     const checkAuth = async () => {
       try {
         const payload = await verifyToken(token);
-        if (payload.role !== 'admin') {
+        if (payload.role !== 'admin' && payload.role !== 'sales') {
           setAuthLoading(false);
           setIsAuthenticated(false);
           router.push('/');
         } else {
+          setUser(payload);
           setAuthLoading(false);
           setIsAuthenticated(true);
         }
@@ -308,13 +310,35 @@ export default function AdminWrapper({ children }: { children: React.ReactNode }
     checkAuth();
   }, [router]);
 
-  const navItems = [
-    { name: 'Dashboard',   href: '/admin/dashboard',   icon: Home },
-    { name: 'Bookings',    href: '/admin/bookings',    icon: Calendar },
-    { name: 'Products',    href: '/admin/products',    icon: Package },
-    { name: 'Bulk Upload', href: '/admin/bulk-upload', icon: Archive },
-    { name: 'Support',     href: '/admin/support',     icon: LifeBuoy },
+  const allNavItems = [
+    { name: 'Dashboard',   href: '/admin/dashboard',   icon: Home,         roles: ['admin'] },
+    { name: 'Orders',      href: '/admin/orders',      icon: Calendar,     roles: ['admin', 'sales'] },
+    { name: 'Products',    href: '/admin/products',    icon: Package,      roles: ['admin', 'sales'] },
+    { name: 'Subscribers', href: '/admin/subscribers', icon: Users,        roles: ['admin'] },
+    { name: 'Send Email',  href: '/admin/send-email',  icon: Mail,         roles: ['admin'] },
+    { name: 'Analytics',   href: '/admin/analytics',   icon: BarChart3,    roles: ['admin'] },
+    { name: 'Manage Staff',href: '/admin/staff',       icon: ShieldCheck,  roles: ['admin'] },
+    { name: 'Bulk Upload', href: '/admin/bulk-upload', icon: Archive,      roles: ['admin', 'sales'] },
+    { name: 'Support',     href: '/admin/support',     icon: LifeBuoy,     roles: ['admin'] },
   ];
+
+  const navItems = allNavItems.filter(item => user && item.roles.includes(user.role));
+
+  useEffect(() => {
+    if (user && !authLoading && isAuthenticated) {
+      const currentPath = pathname;
+      // Find if current path is a restricted one
+      const restrictedItem = allNavItems.find(item => currentPath.startsWith(item.href));
+      
+      if (restrictedItem && !restrictedItem.roles.includes(user.role)) {
+        // Redirect to their default page
+        const target = user.role === 'admin' ? '/admin/dashboard' : '/admin/products';
+        if (currentPath !== target) {
+          router.push(target);
+        }
+      }
+    }
+  }, [user, pathname, authLoading, isAuthenticated, router]);
 
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
@@ -354,7 +378,7 @@ export default function AdminWrapper({ children }: { children: React.ReactNode }
               </svg>
             </div>
             <div className="aw-logo-text">
-              <span className="aw-logo-title">Admin Panel</span>
+              <span className="aw-logo-title">${process.env.NEXT_PUBLIC_BRAND_DISPLAY_NAME || 'Admin Panel'}</span>
               <span className="aw-logo-sub">Management Console</span>
             </div>
           </div>
@@ -386,9 +410,15 @@ export default function AdminWrapper({ children }: { children: React.ReactNode }
             <button
               className="aw-logout-btn"
               onClick={() => {
+                const role = user?.role;
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                router.push('/');
+                
+                if (role === 'admin' || role === 'sales') {
+                  router.push('/admin/login');
+                } else {
+                  router.push('/');
+                }
               }}
             >
               <LogOut size={18} style={{ color: 'var(--ink-30)', flexShrink: 0 }} />

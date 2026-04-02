@@ -5,6 +5,17 @@ import bcrypt from 'bcryptjs';
 import { signToken } from '@/lib/auth';
 import { rateLimiters } from '@/lib/rateLimiter';
 
+export async function OPTIONS() {
+    return new NextResponse(null, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+    });
+}
+
 export async function POST(request: Request) {
     try {
         const { email, password } = await request.json();

@@ -18,9 +18,9 @@ import {
 
 // Base fetcher function
 async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  // Use relative path for API routes (works in both local and Vercel)
-  // In serverless/edge environments, Next.js handles relative paths correctly
-  const url = `/api${endpoint}`;
+  const authBaseUrl = 'http://localhost:3001/api';
+  const isAuthEndpoint = endpoint.startsWith('/auth');
+  const url = isAuthEndpoint ? `${authBaseUrl}${endpoint}` : `/api${endpoint}`;
 
   // Get JWT token from wherever it's stored (cookies, localStorage, etc.)
   // In a real app, you might use a cookie library or next-auth
@@ -75,6 +75,16 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 // Auth API functions
+export async function login(credentials: {
+  email: string;
+  password: string
+}): Promise<ApiResponse<{ user: User; token: string }>> {
+  return fetcher('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
+}
+
 export async function register(userData: {
   name: string;
   email: string;
@@ -116,6 +126,12 @@ export async function refreshToken(): Promise<ApiResponse<{ token: string }>> {
 
 export async function logout(): Promise<ApiResponse<void>> {
   return fetcher('/auth/logout', {
+    method: 'POST',
+  });
+}
+
+export async function logoutAll(): Promise<ApiResponse<void>> {
+  return fetcher('/auth/logout-all', {
     method: 'POST',
   });
 }
@@ -306,15 +322,18 @@ export async function getProductBySlug(slug: string): Promise<ApiResponse<Produc
 }
 
 export async function createOrder(orderData: {
-  items: Array<{
-    productId: string;
-    quantity: number;
-    variantId?: string;
-  }>;
-  shippingAddress: Address;
-  billingAddress: Address;
-  paymentMethod: 'card' | 'upi' | 'netbanking' | 'cod' | 'wallet';
+  items: Array<any>;
+  shippingAddress: any;
+  billingAddress: any;
+  paymentMethod: string;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  discount: number;
+  total: number;
   couponCode?: string;
+  notes?: string;
+  orderNumberPrefix?: string;
 }): Promise<ApiResponse<Order>> {
   return fetcher('/orders', {
     method: 'POST',
@@ -336,9 +355,13 @@ export async function getMyOrders(filters?: {
     });
   }
   const queryString = params.toString();
-  const endpoint = `/orders/me${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/orders/my-orders${queryString ? `?${queryString}` : ''}`;
 
   return fetcher(endpoint);
+}
+
+export async function getOrderById(id: string): Promise<ApiResponse<Order>> {
+  return fetcher(`/orders/${id}`);
 }
 
 export async function trackOrder(orderId: string): Promise<ApiResponse<Order>> {

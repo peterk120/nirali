@@ -5,6 +5,7 @@ import Product from '../../../../models/Product';
 import { StoreType, getCSVTemplate, getAllowedStoreTypes } from '../../../../lib/csv-templates';
 import { FileParser, ParseResult } from '../../../../lib/csv-parser';
 import JSZip from 'jszip';
+import * as XLSX from 'xlsx';
 import crypto from 'crypto';
 
 // ── Same working upload function used in single-product upload ────────────────
@@ -299,6 +300,7 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const storeType = url.searchParams.get('storeType') as StoreType;
+    const format = url.searchParams.get('format') || 'csv';
 
     if (!storeType) {
       return NextResponse.json(
@@ -315,13 +317,33 @@ export async function GET(request: NextRequest) {
     }
 
     const template = getCSVTemplate(storeType);
-    const csvContent = template.headers.join(',') + '\n';
+    const fileName = format === 'xlsx' 
+      ? template.fileName.replace('.csv', '.xlsx')
+      : template.fileName;
 
-    return new Response(csvContent, {
+    if (format === 'xlsx') {
+      const wb = XLSX.utils.book_new();
+      const wsData = [template.headers];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Template');
+      const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Access-Control-Expose-Headers': 'Content-Disposition'
+        }
+      });
+    }
+
+    const csvContent = template.headers.join(',') + '\n';
+    return new NextResponse(csvContent, {
       headers: {
         'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="${template.fileName}"`,
-      },
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      }
     });
 
   } catch (error) {

@@ -7,10 +7,11 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "pnpm --parallel --filter=./apps/* dev",
+    "dev": "pnpm --recursive dev",
+    "dev:all": "pnpm --recursive dev",
     "dev:boutique": "pnpm --filter=@nirali-sai/boutique dev",
-    "build": "pnpm --filter=./apps/* build",
-    "start": "pnpm --filter=./apps/* start",
+    "build": "pnpm --recursive build",
+    "start": "pnpm --recursive start",
     "start:boutique": "pnpm --filter=@nirali-sai/boutique start",
     "lint": "pnpm --recursive lint"
   },

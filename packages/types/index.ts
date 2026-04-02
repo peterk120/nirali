@@ -6,6 +6,9 @@ export interface User {
   email: string;
   phone: string;
   password: string;
+  role: 'user' | 'admin' | 'sales';
+  status: 'active' | 'disabled';
+  activeSessions: string[];
   createdAt: string;
   updatedAt: string;
   profilePicture: string;
@@ -333,6 +336,18 @@ export interface Order {
   notes: string;
   couponCode: string | null;
   loyaltyPointsUsed: number;
+  paymentDetails?: {
+    transactionId?: string;
+    proofUrl?: string;
+    verifiedAt?: string;
+    verifiedBy?: string;
+  };
+  history?: Array<{
+    status: OrderStatus;
+    timestamp: string;
+    message?: string;
+    updatedBy?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }

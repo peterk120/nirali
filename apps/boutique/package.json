@@ -23,7 +23,9 @@
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
+    "csv-parse": "^6.1.0",
     "framer-motion": "^10.18.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.292.0",
     "mongodb": "^7.1.0",
     "mongoose": "^7.8.9",
@@ -36,6 +38,7 @@
     "react-hot-toast": "^2.6.0",
     "swiper": "^11.0.0",
     "tailwind-merge": "^2.6.1",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76",
     "zustand": "^4.5.7"
   },

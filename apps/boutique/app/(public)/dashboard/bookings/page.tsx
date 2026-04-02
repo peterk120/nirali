@@ -123,31 +123,32 @@ const MyBookingsPage = () => {
           return;
         }
 
-        // Fetch bookings for this user
-        const response = await fetch(`/api/bookings?email=${encodeURIComponent(user.email)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        // Import getMyOrders from @/lib/api
+        const { getMyOrders } = await import('../../../../lib/api');
 
-        const result = await response.json();
+        // Fetch bookings for this user using standardized API
+        const result = await getMyOrders();
 
-        if (result.success) {
+        if (result.success && result.data) {
           // Transform MongoDB documents to Booking interface
-          const transformedBookings = result.data.map((order: any) => ({
-            id: order.orderId, // Display orderId
+          // Note: result.data.data because getMyOrders returns a paginated response
+          const orderListData = Array.isArray(result.data) ? result.data : (result.data as any).data || [];
+          
+          const transformedBookings = orderListData.map((order: any) => ({
+            id: order.orderNumber || order._id.toString(), // Display orderNumber
             orderId: order._id.toString(), // MongoDB _id for API calls
             dress: {
-              id: order.productId?.toString() || order.productId || 'unknown',
-              name: order.productName || 'Product',
-              category: order.category || 'Unknown',
-              image: order.productImage || '/placeholder-product.jpg'
+              // Get first item for the summary
+              id: order.items?.[0]?.productId || 'unknown',
+              name: order.items?.[0]?.productName || 'Order ' + (order.orderNumber || ''),
+              category: order.items?.[0]?.category || 'Dress',
+              image: order.items?.[0]?.productImage || '/placeholder-product.jpg'
             },
-            startDate: new Date(order.rentalStartDate),
-            endDate: new Date(order.rentalEndDate),
+            startDate: new Date(order.items?.[0]?.startDate || order.createdAt),
+            endDate: new Date(order.items?.[0]?.endDate || order.createdAt),
             status: mapOrderStatusToBookingStatus(order.status),
-            amountPaid: order.totalAmount || 0,
-            depositStatus: order.depositStatus || 'held',
+            amountPaid: order.total || 0,
+            depositStatus: order.paymentStatus === 'paid' ? 'held' : 'refunded',
             refundAmount: order.refundAmount,
             isReviewed: order.isReviewed || false,
             existingRating: order.rating

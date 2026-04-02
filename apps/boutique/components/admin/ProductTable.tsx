@@ -21,6 +21,7 @@ interface Product {
 interface ProductTableProps {
   products: Product[];
   selectedIds: string[];
+  userRole?: string;
   onSelectAll: (selected: boolean) => void;
   onSelectProduct: (id: string, selected: boolean) => void;
   onEdit: (id: string) => void;
@@ -32,6 +33,7 @@ interface ProductTableProps {
 export function ProductTable({
   products,
   selectedIds,
+  userRole,
   onSelectAll,
   onSelectProduct,
   onEdit,
@@ -125,6 +127,7 @@ export function ProductTable({
                   key={product.id}
                   product={product}
                   isSelected={selectedIds.includes(product.id)}
+                  userRole={userRole}
                   onSelect={onSelectProduct}
                   onEdit={onEdit}
                   onView={onView}

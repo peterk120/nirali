@@ -6,7 +6,7 @@ export interface UserProfile {
     email: string;
     phone: string;
     address: string;
-    role?: 'user' | 'admin';
+    role?: 'user' | 'admin' | 'sales';
     avatar?: string;
 }
 
@@ -16,6 +16,7 @@ interface AuthState {
     bookingsCount: number;
     login: (userData: UserProfile) => void;
     logout: () => void;
+    logoutAll: () => void;
     fetchSession: () => Promise<void>;
     fetchBookingsCount: () => Promise<void>;
 }
@@ -39,6 +40,21 @@ export const useAuthStore = create<AuthState>()(
             },
             logout: () => {
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                set({ isLoggedIn: false, user: null, bookingsCount: 0 });
+            },
+            logoutAll: async () => {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    try {
+                        const { logoutAll: apiLogoutAll } = await import('../api');
+                        await apiLogoutAll();
+                    } catch (e) {
+                        console.error('Logout all failed', e);
+                    }
+                }
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 set({ isLoggedIn: false, user: null, bookingsCount: 0 });
             },
             fetchBookingsCount: async () => {
@@ -67,7 +83,9 @@ export const useAuthStore = create<AuthState>()(
                     return;
                 }
                 try {
-                    const res = await fetch('/api/auth/me', {
+                    // Standardized backend for auth
+                    const baseUrl = 'http://localhost:3001/api';
+                    const res = await fetch(`${baseUrl}/auth/me`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     const data = await res.json();
