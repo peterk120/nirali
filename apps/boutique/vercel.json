@@ -1,5 +1,0 @@
-{
-  "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && pnpm --filter @nirali-sai/boutique build",
-  "framework": "nextjs"
-}
