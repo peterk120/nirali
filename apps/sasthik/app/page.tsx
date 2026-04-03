@@ -111,7 +111,7 @@ export default function HomePage() {
     <div className="flex flex-col bg-white overflow-hidden">
       
       {/* [3A] Hero Banner Carousel */}
-      <section className="relative h-[500px] md:h-[650px] w-full overflow-hidden">
+      <section className="relative h-[350px] sm:h-[450px] md:h-[650px] w-full overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentHero}
@@ -119,11 +119,9 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1 }}
-            className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center`}
+            className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center bg-cover bg-[80%_center] md:bg-center`}
             style={heroSlides[currentHero].image ? {
               backgroundImage: `url('${heroSlides[currentHero].image}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
             } : {}}
           >
             {heroSlides[currentHero].image && <div className="absolute inset-0 bg-black/40 z-0" />} 
@@ -162,7 +160,7 @@ export default function HomePage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                className={`flex flex-col sm:flex-row items-center justify-center gap-4 ${heroSlides[currentHero].image ? 'mt-40 md:mt-80' : ''}`}
+                className={`flex flex-col sm:flex-row items-center justify-center gap-4 ${heroSlides[currentHero].image ? 'mt-28 md:mt-80' : ''}`}
               >
                 <Link href={heroSlides[currentHero].buttonLink as any} className="bg-white text-[#1A1A2E] px-12 py-4 font-body text-[11px] tracking-widest uppercase hover:bg-brand-rose-gold hover:text-white transition-all shadow-xl font-bold flex items-center gap-2">
                   {heroSlides[currentHero].buttonText} <ArrowRight size={14} />
