@@ -123,7 +123,7 @@ export default function HomePage() {
     <div className="flex flex-col bg-white overflow-hidden">
       
       {/* [3A] Hero Banner Carousel */}
-      <section className="relative w-full h-[80vh] md:h-[650px] overflow-hidden bg-brand-dark">
+      <section className="relative w-full h-[80vh] h-[80dvh] md:h-[650px] overflow-hidden bg-brand-dark">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentHero}
@@ -144,7 +144,7 @@ export default function HomePage() {
                       alt={heroSlides[currentHero].title || "Banner"}
                       fill
                       priority
-                      className="object-cover"
+                      className="object-cover object-center"
                       sizes="100vw"
                     />
                   </div>
@@ -156,7 +156,7 @@ export default function HomePage() {
                       alt={heroSlides[currentHero].title || "Banner"}
                       fill
                       priority
-                      className="object-cover"
+                      className="object-cover object-center"
                       sizes="100vw"
                     />
                   </div>
