@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle, 
@@ -13,10 +14,20 @@ import { getProducts } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
 // ── Dummy Data ──
-const heroSlides = [
-  { title: "", subtitle: "", color: "bg-brand-teal", image: "/img/banner 1.png", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery" },
-  { title: "", subtitle: "", color: "bg-brand-rose-gold", image: "/img/banner 2.png", buttonText: "Explore Collection", buttonLink: "/jewellery" },
-  { title: "", subtitle: "", color: "bg-[#1A1A2E]", image: "/img/banner 3.png", buttonText: "Shop New Arrivals", buttonLink: "/jewellery" },
+interface HeroSlide {
+  title: string;
+  subtitle: string;
+  color: string;
+  image: string;
+  buttonText: string;
+  buttonLink: string;
+  position?: string;
+}
+
+const heroSlides: HeroSlide[] = [
+  { title: "", subtitle: "", color: "bg-brand-teal", image: "/img/banner 1.png", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery", position: "left" },
+  { title: "", subtitle: "", color: "bg-brand-rose-gold", image: "/img/banner 2.png", buttonText: "Explore Collection", buttonLink: "/jewellery", position: "left" },
+  { title: "", subtitle: "", color: "bg-[#1A1A2E]", image: "/img/banner 3.png", buttonText: "Shop New Arrivals", buttonLink: "/jewellery", position: "top" },
 ];
 
 const occasions = [
@@ -111,7 +122,7 @@ export default function HomePage() {
     <div className="flex flex-col bg-white overflow-hidden">
       
       {/* [3A] Hero Banner Carousel */}
-      <section className="relative h-[350px] sm:h-[450px] md:h-[650px] w-full overflow-hidden">
+      <section className="relative w-full h-[60vh] md:h-[650px] overflow-hidden bg-gray-100">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentHero}
@@ -119,13 +130,25 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1 }}
-            className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center bg-cover bg-[80%_center] md:bg-center`}
-            style={heroSlides[currentHero].image ? {
-              backgroundImage: `url('${heroSlides[currentHero].image}')`,
-            } : {}}
+            className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center`}
           >
-            {heroSlides[currentHero].image && <div className="absolute inset-0 bg-black/40 z-0" />} 
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+            {heroSlides[currentHero].image ? (
+              <div className="relative w-full h-full overflow-hidden">
+                <Image 
+                  src={heroSlides[currentHero].image}
+                  alt={heroSlides[currentHero].title || "Banner"}
+                  fill
+                  priority
+                  className="object-contain md:object-cover"
+                  style={{ objectPosition: 'center' }}
+                  sizes="100vw"
+                />
+                <div className="absolute inset-0 bg-black/20 z-0" />
+              </div>
+            ) : (
+                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+            )}
+            
             <div className="container mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center justify-center text-center text-white h-full">
               {heroSlides[currentHero].title && !heroSlides[currentHero].image && (
                 <div className="max-w-4xl mx-auto">
@@ -160,7 +183,7 @@ export default function HomePage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                className={`flex flex-col sm:flex-row items-center justify-center gap-4 ${heroSlides[currentHero].image ? 'mt-28 md:mt-80' : ''}`}
+                className={`flex flex-col sm:flex-row items-center justify-center gap-4 ${heroSlides[currentHero].image ? 'mt-20 md:mt-80' : ''}`}
               >
                 <Link href={heroSlides[currentHero].buttonLink as any} className="bg-white text-[#1A1A2E] px-12 py-4 font-body text-[11px] tracking-widest uppercase hover:bg-brand-rose-gold hover:text-white transition-all shadow-xl font-bold flex items-center gap-2">
                   {heroSlides[currentHero].buttonText} <ArrowRight size={14} />
