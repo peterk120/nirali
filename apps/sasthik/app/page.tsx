@@ -19,15 +19,16 @@ interface HeroSlide {
   subtitle: string;
   color: string;
   image: string;
+  mobileImage?: string;
   buttonText: string;
   buttonLink: string;
   position?: string;
 }
 
 const heroSlides: HeroSlide[] = [
-  { title: "", subtitle: "", color: "bg-brand-teal", image: "/img/banner 1.png", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery", position: "left" },
-  { title: "", subtitle: "", color: "bg-brand-rose-gold", image: "/img/banner 2.png", buttonText: "Explore Collection", buttonLink: "/jewellery", position: "left" },
-  { title: "", subtitle: "", color: "bg-[#1A1A2E]", image: "/img/banner 3.png", buttonText: "Shop New Arrivals", buttonLink: "/jewellery", position: "top" },
+  { title: "", subtitle: "", color: "bg-brand-teal", image: "/img/banner 1.png", mobileImage: "/img/banner 1 mob.png", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery" },
+  { title: "", subtitle: "", color: "bg-brand-rose-gold", image: "/img/banner 2.png", mobileImage: "/img/banner 2 mob.png", buttonText: "Explore Collection", buttonLink: "/jewellery" },
+  { title: "", subtitle: "", color: "bg-[#1A1A2E]", image: "/img/banner 3.png", mobileImage: "/img/banner 3 mob.png", buttonText: "Shop New Arrivals", buttonLink: "/jewellery" },
 ];
 
 const occasions = [
@@ -122,7 +123,7 @@ export default function HomePage() {
     <div className="flex flex-col bg-white overflow-hidden">
       
       {/* [3A] Hero Banner Carousel */}
-      <section className="relative w-full h-[60vh] md:h-[650px] overflow-hidden bg-gray-100">
+      <section className="relative w-full h-[80vh] md:h-[650px] overflow-hidden bg-brand-dark">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentHero}
@@ -132,23 +133,41 @@ export default function HomePage() {
             transition={{ duration: 1 }}
             className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center`}
           >
-            {heroSlides[currentHero].image ? (
-              <div className="relative w-full h-full overflow-hidden">
-                <Image 
-                  src={heroSlides[currentHero].image}
-                  alt={heroSlides[currentHero].title || "Banner"}
-                  fill
-                  priority
-                  className="object-contain md:object-cover"
-                  style={{ objectPosition: 'center' }}
-                  sizes="100vw"
-                />
-                <div className="absolute inset-0 bg-black/20 z-0" />
-              </div>
-            ) : (
+            {/* Hero Image Layer */}
+            <div className="absolute inset-0 overflow-hidden z-0">
+              {heroSlides[currentHero].image ? (
+                <>
+                  {/* Desktop Image */}
+                  <div className="hidden md:block absolute inset-0">
+                    <Image 
+                      src={heroSlides[currentHero].image}
+                      alt={heroSlides[currentHero].title || "Banner"}
+                      fill
+                      priority
+                      className="object-cover"
+                      sizes="100vw"
+                    />
+                  </div>
+                  
+                  {/* Mobile Image (Optimized Portrait) */}
+                  <div className="block md:hidden absolute inset-0">
+                    <Image 
+                      src={heroSlides[currentHero].mobileImage || heroSlides[currentHero].image}
+                      alt={heroSlides[currentHero].title || "Banner"}
+                      fill
+                      priority
+                      className="object-cover"
+                      sizes="100vw"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-black/20 md:bg-black/10" />
+                </>
+              ) : (
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-            )}
+              )}
+            </div>
             
+            {/* Content Overaly Layer */}
             <div className="container mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center justify-center text-center text-white h-full">
               {heroSlides[currentHero].title && !heroSlides[currentHero].image && (
                 <div className="max-w-4xl mx-auto">
