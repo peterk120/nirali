@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ProductCard from '@/components/ProductCard';
+import ProductSkeleton, { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProducts } from '@/lib/api';
@@ -91,9 +92,7 @@ export default function AllProductsPage() {
 
             {/* Product Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 md:gap-x-8 md:gap-y-16 animate-pulse">
-                {[...Array(6)].map((_, i) => <div key={i} className="h-80 bg-teal-light rounded-xl" />)}
-              </div>
+              <ProductGridSkeleton count={6} columns="grid-cols-2 md:grid-cols-2 lg:grid-cols-3" />
             ) : products.length === 0 ? (
               <div className="text-center py-20 bg-teal-light/20 rounded-3xl border border-dashed border-teal-light">
                 <p className="font-body text-gray-500 uppercase tracking-widest text-xs">Our collection is currently transitioning. Check back soon for new treasures.</p>

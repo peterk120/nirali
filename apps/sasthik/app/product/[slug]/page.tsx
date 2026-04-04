@@ -10,6 +10,7 @@ import {
 import { useWishlistStore } from '@/lib/stores/wishlistStore';
 import { useCartStore } from '@/lib/stores/cartStore';
 import ProductCard from '@/components/ProductCard';
+import ProductDetailSkeleton from '@/components/ProductDetailSkeleton';
 import { getProductBySlug } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -50,7 +51,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     fetchProduct();
   }, [params.slug]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-heading text-2xl italic text-brand-teal animate-pulse">Loading Product Details...</div>;
+  if (loading) return <ProductDetailSkeleton />;
   if (!product) return <div className="min-h-screen flex items-center justify-center font-heading text-2xl italic text-brand-rose-gold">Product not found</div>;
 
   const id = product.id || product._id;

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
+import { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { Search, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { getProducts } from '@/lib/api';
 import Link from 'next/link';
@@ -51,9 +52,7 @@ export default function SearchPage() {
 
       <div className="container mx-auto px-6 py-16">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 animate-pulse">
-            {[...Array(8)].map((_, i) => <div key={i} className="h-80 bg-teal-light rounded-2xl" />)}
-          </div>
+          <ProductGridSkeleton count={8} columns="grid-cols-2 md:grid-cols-3 lg:grid-cols-4" />
         ) : products.length === 0 ? (
           <div className="max-w-2xl mx-auto text-center py-20 bg-teal-light/20 rounded-[3rem] border border-dashed border-teal-light p-12">
             <Search size={48} className="mx-auto text-brand-teal mb-6 opacity-30" />
