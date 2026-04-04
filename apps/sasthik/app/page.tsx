@@ -9,7 +9,7 @@ import HeroCarousel from '@/components/home/HeroCarousel';
 import SubscriptionForm from '@/components/home/SubscriptionForm';
 
 export const metadata: Metadata = {
-  title: 'Saasthik — Artisanal Indian Jewelry & Bridal Sets',
+  title: 'Niralisai — Artisanal Indian Jewelry & Bridal Sets',
   description: 'Explore our exquisite collection of premium Indian jewelry, from temple sets to modern minimal pieces. Tarnish-resistant, hypoallergenic, and crafted for your special moments.',
 };
 
@@ -152,7 +152,7 @@ export default async function HomePage() {
       <section className="py-24 bg-[#FAF9F6]">
         <div className="container mx-auto px-6 text-center mb-16">
           <span className="text-[10px] tracking-[0.4em] uppercase font-bold text-brand-rose-gold mb-4 block">Our Commitment</span>
-          <h2 className="font-heading text-4xl md:text-5xl text-brand-dark mb-4 italic">The Saasthik Promise</h2>
+          <h2 className="font-heading text-4xl md:text-5xl text-brand-dark mb-4 italic">The Niralisai Promise</h2>
           <div className="w-12 h-0.5 bg-brand-rose-gold/30 mx-auto" />
         </div>
         

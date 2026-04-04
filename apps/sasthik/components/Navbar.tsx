@@ -137,10 +137,10 @@ export default function Navbar() {
       <div className="border-b border-teal-light py-2 px-6 md:px-12 bg-white hidden md:block">
         <div className="max-w-7xl mx-auto flex justify-between items-center text-[11px] font-body text-gray-500 tracking-wider">
           <div className="flex gap-6 items-center">
-            <span className="flex items-center gap-1.5"><Phone size={12} className="text-brand-rose-gold" /> +91 XXXXX XXXXX</span>
-            <Link href={"/stores" as any} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors">
+            <a href="tel:9342661671" className="flex items-center gap-1.5 hover:text-brand-teal transition-colors"><Phone size={12} className="text-brand-rose-gold" /> +91 93426 61671</a>
+            <a href="https://share.google/MHAIIcO5uzrsAp2xv" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand-teal transition-colors">
               <MapPin size={12} className="text-brand-rose-gold" /> Store Locator
-            </Link>
+            </a>
           </div>
           <div className="flex gap-6 items-center">
             <Link href={"/track-order" as any} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors">
@@ -238,11 +238,11 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-teal rounded-sm flex items-center justify-center text-white rotate-45 transition-transform group-hover:rotate-[225deg]">
-              <span className="-rotate-45 text-lg md:text-xl font-heading leading-none">S</span>
+              <span className="-rotate-45 text-lg md:text-xl font-heading leading-none">N</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-heading text-xl md:text-2xl leading-none tracking-tight text-brand-dark">Sasthik</span>
-              <span className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-brand-rose-gold font-bold">Bridal Jewels</span>
+              <span className="font-heading text-xl md:text-2xl leading-none tracking-tight text-brand-dark">Niralisai</span>
+              <span className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-brand-rose-gold font-bold">Premium Jewels</span>
             </div>
           </Link>
 
@@ -442,9 +442,9 @@ export default function Navbar() {
                     </div>
                     <div className="bg-teal-light p-6 rounded-lg flex flex-col justify-end min-h-[180px] relative">
                        <div>
-                         <div className="font-heading text-3xl mb-2">Sashti Sparkle</div>
+                         <div className="font-heading text-3xl mb-2">Niralisai Jewels</div>
                          <p className="text-[11px] uppercase tracking-[0.3em] text-brand-rose-gold font-medium">
-                           Premium Imitation Jewellery
+                           Premium Indian Jewellery
                          </p>
                        </div>
                        <h5 className="font-heading text-xl text-brand-teal mb-4 italic">The Festive Edit</h5>
@@ -480,9 +480,9 @@ export default function Navbar() {
               <div className="p-6 border-b border-teal-light flex justify-between items-center bg-teal-light/20">
                 <div className="flex items-center gap-2">
                    <div className="w-8 h-8 bg-brand-teal rounded flex items-center justify-center text-white rotate-45">
-                      <span className="-rotate-45 text-sm font-heading">S</span>
+                      <span className="-rotate-45 text-sm font-heading">N</span>
                    </div>
-                   <span className="font-heading text-xl text-brand-teal uppercase tracking-tighter">Sparkle</span>
+                   <span className="font-heading text-xl text-brand-teal uppercase tracking-tighter">Niralisai</span>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-white rounded-full shadow-sm">
                   <X size={20} className="text-gray-400" />
@@ -510,9 +510,14 @@ export default function Navbar() {
                    <Link href={"/track-order" as any} className="flex items-center gap-4 text-brand-dark font-body text-sm tracking-wide">
                       <Truck size={18} className="text-brand-rose-gold" /> Track Order
                    </Link>
-                   <Link href={"/stores" as any} className="flex items-center gap-4 text-brand-dark font-body text-sm tracking-wide">
-                      <MapPin size={18} className="text-brand-rose-gold" /> Store Locator
-                   </Link>
+                    <a 
+                      href="https://share.google/MHAIIcO5uzrsAp2xv" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex items-center gap-4 text-brand-dark font-body text-sm tracking-wide"
+                    >
+                       <MapPin size={18} className="text-brand-rose-gold" /> Store Locator
+                    </a>
                 </div>
               </div>
 

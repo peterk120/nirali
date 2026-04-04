@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Heart, Phone, Mail, MapPin, Instagram, 
-  Facebook, Youtube, Share2 
+  Facebook, Youtube, Share2, ExternalLink
 } from 'lucide-react';
 
 const footerLinks = [
@@ -12,21 +12,20 @@ const footerLinks = [
     title: "Quick Links",
     links: [
       { label: "About Us", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Store Locator", href: "/stores" },
-      { label: "Careers", href: "/careers" },
+      { label: "Store Locator", href: "https://share.google/MHAIIcO5uzrsAp2xv" },
+      { label: "Our Boutique", href: "https://nirali-boutique.vercel.app/" },
+      { label: "Tamil Bridal Makeover", href: "#" }, // Coming Soon
       { label: "Wholesale Enquiry", href: "/wholesale" },
     ]
   },
   {
-    title: "Help",
+    title: "Help & Support",
     links: [
       { label: "Track Order", href: "/track-order" },
       { label: "Returns & Exchange", href: "/returns" },
-      { label: "Size Guide", href: "/size-guide" },
       { label: "FAQ", href: "/faq" },
       { label: "Contact Us", href: "/contact" },
-      { label: "WhatsApp Us", href: "https://wa.me/91XXXXXXXXXX" },
+      { label: "WhatsApp Us", href: "https://wa.me/919342661671" },
     ]
   }
 ];
@@ -47,9 +46,9 @@ export default function Footer() {
           {/* Column 1: Branding & Social */}
           <div className="flex flex-col gap-4 md:gap-6">
             <div>
-              <div className="font-heading text-2xl md:text-3xl mb-2 text-white">Sashti Sparkle</div>
+              <div className="font-heading text-2xl md:text-3xl mb-2 text-white">Niralisai Jewels</div>
               <p className="text-[10px] md:text-[11px] uppercase tracking-[0.3em] text-brand-rose-gold font-medium">
-                Premium Imitation Jewellery
+                Premium Indian Jewellery
               </p>
             </div>
             <p className="text-[12px] md:text-[13px] text-gray-400 leading-relaxed max-w-xs">
@@ -77,39 +76,56 @@ export default function Footer() {
               <ul className="flex flex-col gap-2 md:gap-3">
                 {section.links.map((link, i) => (
                   <li key={i}>
-                    <Link 
-                      href={link.href as any} 
-                      className="text-[12px] md:text-[13px] text-gray-400 hover:text-brand-rose-gold transition-colors block"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.href.startsWith('http') ? (
+                       <a 
+                        href={link.href} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] md:text-[13px] text-gray-400 hover:text-brand-rose-gold transition-colors flex items-center gap-1.5"
+                      >
+                        {link.label} {link.label !== "Tamil Bridal Makeover" && <ExternalLink size={10} />}
+                      </a>
+                    ) : (
+                      <Link 
+                        href={link.href as any} 
+                        className="text-[12px] md:text-[13px] text-gray-400 hover:text-brand-rose-gold transition-colors block"
+                      >
+                        {link.label} {link.label === "Tamil Bridal Makeover" && <span className="text-[8px] bg-brand-rose-gold/20 text-brand-rose-gold px-1.5 py-0.5 rounded ml-1 font-bold">SOON</span>}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
           ))}
 
-          {/* Column 4: Contact & Apps */}
+          {/* Column 4: Contact */}
           <div>
             <h4 className="text-[13px] md:text-[14px] font-heading text-white border-b border-white/5 pb-3 md:pb-4 mb-4 md:mb-6 tracking-wider">
-              Get in Touch
+              Visit Our Store
             </h4>
             <div className="flex flex-col gap-4 md:gap-5">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 group cursor-pointer" onClick={() => window.open('https://share.google/MHAIIcO5uzrsAp2xv', '_blank')}>
                 <MapPin size={14} className="text-brand-rose-gold mt-1 shrink-0" />
-                <p className="text-[12px] md:text-[13px] text-gray-400">456 Sparkle Lane, Ground Floor, T. Nagar, Chennai</p>
+                <p className="text-[12px] md:text-[13px] text-gray-400 group-hover:text-white transition-colors">
+                  Shop No. 17, Kandhaswarna Shopping Mall, Saradha College Main Road, Fairlands, Salem, TN 636016
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Phone size={14} className="text-brand-rose-gold shrink-0" />
-                <p className="text-[12px] md:text-[13px] text-gray-400">+91 XXXXX XXXXX</p>
+                <a href="tel:9342661671" className="text-[12px] md:text-[13px] text-gray-400 hover:text-white transition-colors">+91 93426 61671</a>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail size={14} className="text-brand-rose-gold shrink-0" />
+                <a href="mailto:niralisaijewels@gmail.com" className="text-[12px] md:text-[13px] text-gray-400 hover:text-white transition-colors">niralisaijewels@gmail.com</a>
               </div>
               
-              <div className="pt-2 flex flex-col gap-3">
-                <p className="text-[10px] uppercase tracking-widest text-brand-rose-gold font-bold">Download our App</p>
-                <div className="flex gap-2">
-                  <div className="h-9 w-24 bg-white/5 border border-white/10 rounded flex items-center justify-center text-[9px] text-gray-400 cursor-pointer hover:bg-white/10">App Store</div>
-                  <div className="h-9 w-24 bg-white/5 border border-white/10 rounded flex items-center justify-center text-[9px] text-gray-400 cursor-pointer hover:bg-white/10">Play Store</div>
-                </div>
+              <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
+                <p className="text-[10px] uppercase tracking-widest text-brand-rose-gold font-bold">Connect for Styling</p>
+                <Link href="https://wa.me/919342661671" target="_blank" className="bg-white/5 hover:bg-white/10 p-3 rounded-lg flex items-center justify-between group transition-all">
+                  <span className="text-[11px] text-gray-400 group-hover:text-white">Chat on WhatsApp</span>
+                  <ExternalLink size={12} className="text-brand-rose-gold" />
+                </Link>
               </div>
             </div>
           </div>
@@ -118,13 +134,13 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-6 md:pt-8 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
           <p className="text-[10px] md:text-[11px] text-gray-500 tracking-wide order-2 md:order-1 text-center md:text-left">
-            © {year} Sashti Sparkle. All rights reserved. &nbsp; | &nbsp; 
+            © {year} Niralisai Jewels. All rights reserved. &nbsp; | &nbsp; 
             <Link href={"/privacy" as any} className="hover:text-white transition-colors">Privacy</Link> &nbsp; | &nbsp; 
             <Link href={"/terms" as any} className="hover:text-white transition-colors">Terms</Link>
           </p>
           
           <div className="flex items-center gap-3 md:gap-4 opacity-40 order-1 md:order-2">
-            <span className="text-[9px] md:text-[10px] uppercase tracking-widest text-white mr-1 md:mr-2">We Accept:</span>
+            <span className="text-[9px] md:text-[10px] uppercase tracking-widest text-white mr-1 md:mr-2">Trusted Payments:</span>
             <div className="flex gap-2 md:gap-3 h-4 md:h-5 text-[7px] md:text-[8px] items-center">
               <span className="border border-white/20 px-1.5 md:px-2 py-0.5 rounded">VISA</span>
               <span className="border border-white/20 px-1.5 md:px-2 py-0.5 rounded">UPI</span>
@@ -137,7 +153,7 @@ export default function Footer() {
               Handcrafted with <Heart size={10} className="text-brand-rose-gold fill-brand-rose-gold" /> in India
             </p>
             <p className="text-[9px] tracking-widest uppercase text-brand-rose-gold/60 font-bold">
-               Crafted by Prajan
+               Niralisai Jewels
             </p>
           </div>
         </div>

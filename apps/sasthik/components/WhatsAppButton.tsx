@@ -17,7 +17,7 @@ export default function WhatsAppButton() {
     return null;
   }
 
-  const phoneNumber = '+91XXXXXXXXXX'; 
+  const phoneNumber = '919342661671'; 
   const message = encodeURIComponent('Hi Sashti Sparkle, I am looking for some jewellery and need assistance.');
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
