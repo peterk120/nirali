@@ -149,11 +149,11 @@ export default function Footer() {
           </div>
 
           <div className="text-[10px] md:text-[11px] text-gray-500 flex flex-col items-center md:items-end gap-1 order-3">
-            <p className="flex items-center gap-1.5">
-              Handcrafted with <Heart size={10} className="text-brand-rose-gold fill-brand-rose-gold" /> in India
+            <p className="text-[9px] uppercase tracking-[0.2em] text-gray-400">
+              Handcrafted within India
             </p>
-            <p className="text-[9px] tracking-widest uppercase text-brand-rose-gold/60 font-bold">
-               Niralisai Jewels
+            <p className="text-[9px] tracking-[0.3em] uppercase text-brand-rose-gold/60 font-bold mt-0.5">
+               Prajan
             </p>
           </div>
         </div>
