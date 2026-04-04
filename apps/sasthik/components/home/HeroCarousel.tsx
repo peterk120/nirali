@@ -33,7 +33,7 @@ export default function HeroCarousel() {
   }, []);
 
   return (
-    <section className="relative w-full h-[80vh] h-[80dvh] md:h-[650px] overflow-hidden bg-brand-dark">
+    <section className="relative w-full h-[80vh] h-[80dvh] md:h-[75vh] md:min-h-[500px] md:max-h-[700px] overflow-hidden bg-brand-dark">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentHero}
