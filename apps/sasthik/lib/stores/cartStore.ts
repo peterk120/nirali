@@ -37,9 +37,9 @@ export const useCartStore = create<CartStore>()(
             setItems: (items) => set({ items }),
 
             fetchCart: async () => {
-                const token = localStorage.getItem('token');
+                const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                 if (!token) {
-                    set({ items: [], isLoading: false });
+                    set({ isLoading: false }); // Do not clear items, keep the guest cart!
                     return;
                 }
 

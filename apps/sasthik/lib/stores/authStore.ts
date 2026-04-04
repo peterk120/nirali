@@ -38,10 +38,16 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoggedIn: true, user: userData, token });
                 get().fetchBookingsCount(); // Fetch counts on login
                 
-                // Merge guest cart if user was browsing as guest
+                // Merge guest cart and wishlist if user was browsing as guest
                 setTimeout(async () => {
-                    const { useCartStore } = await import('./cartStore');
-                    await useCartStore.getState().mergeGuestCart();
+                    const [{ useCartStore }, { useWishlistStore }] = await Promise.all([
+                        import('./cartStore'),
+                        import('./wishlistStore')
+                    ]);
+                    await Promise.all([
+                        useCartStore.getState().mergeGuestCart(),
+                        useWishlistStore.getState().mergeGuestWishlist()
+                    ]);
                 }, 0);
             },
             logout: () => {

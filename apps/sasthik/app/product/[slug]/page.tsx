@@ -5,13 +5,15 @@ import { motion } from 'framer-motion';
 import { 
   Heart, ShoppingBag, Star, Share2, 
   ChevronRight, MapPin, ShieldCheck, 
-  RotateCcw, Truck, Info
+  RotateCcw, Truck, Info, ArrowRight
 } from 'lucide-react';
 import { useWishlistStore } from '@/lib/stores/wishlistStore';
 import { useCartStore } from '@/lib/stores/cartStore';
 import ProductCard from '@/components/ProductCard';
 import { getProductBySlug } from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { useRouter } from 'next/navigation';
 
 const crossSellProducts = [
   { id: 'cs1', name: 'Matching Kundan Earrings', price: 499, rating: 4.8, reviews: 24, material: 'Kundan', style: 'Traditional' },
@@ -27,6 +29,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
   const { items: wishlistItems, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlistStore();
   const { addItem: addToCart } = useCartStore();
+  const { isLoggedIn } = useAuthStore();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -83,6 +87,26 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       rentalDays: 1
     });
     toast.success('Added to bag');
+  };
+
+  const handleBuyNow = async () => {
+    // Add to cart first
+    await addToCart({
+      productId: id,
+      name,
+      price,
+      quantity: 1,
+      image: product.image || '',
+      rentalDays: 1
+    });
+    
+    // Then checkout
+    if (isLoggedIn) {
+      router.push('/checkout');
+    } else {
+      toast.success('Added to bag! Redirecting to login to complete checkout.', { duration: 3000 });
+      router.push('/login?redirectTo=/checkout');
+    }
   };
 
   const checkPincode = () => {
@@ -148,16 +172,22 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <button 
                 onClick={handleAddToCart}
-                className="flex-grow bg-brand-teal text-white py-5 rounded-xl font-body text-[12px] tracking-[0.2em] uppercase font-bold hover:bg-brand-dark hover:shadow-luxury transition-all flex items-center justify-center gap-3"
+                className="flex-grow bg-white border-2 border-brand-teal text-brand-teal py-5 rounded-xl font-body text-[12px] tracking-[0.2em] uppercase font-bold hover:bg-teal-light transition-all flex items-center justify-center gap-3"
               >
                 <ShoppingBag size={18} /> Add to Bag
               </button>
               <button 
+                onClick={handleBuyNow}
+                className="flex-grow bg-brand-teal text-white py-5 rounded-xl font-body text-[12px] tracking-[0.2em] uppercase font-bold hover:bg-brand-dark hover:shadow-luxury transition-all flex items-center justify-center gap-3 group"
+              >
+                Buy Now <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+              </button>
+              <button 
                 onClick={handleWishlist}
-                className={`w-16 h-16 border rounded-xl flex items-center justify-center transition-all ${isWishlisted ? 'bg-brand-rose-gold border-brand-rose-gold text-white shadow-md' : 'border-teal-light text-gray-400 hover:text-brand-rose-gold hover:border-brand-rose-gold'}`}
+                className={`w-16 h-16 border rounded-xl flex items-center justify-center transition-all shrink-0 ${isWishlisted ? 'bg-brand-rose-gold border-brand-rose-gold text-white shadow-md' : 'border-teal-light text-gray-400 hover:text-brand-rose-gold hover:border-brand-rose-gold'}`}
               >
                 <Heart size={22} className={isWishlisted ? "fill-white" : ""} />
               </button>

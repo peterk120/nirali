@@ -73,15 +73,15 @@ export default function HeroCarousel() {
             )}
           </div>
           
-          <div className="container mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center justify-center text-center text-white h-full">
+          <div className="container mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center justify-end pb-12 md:pb-24 text-center text-white h-full uppercase font-bold tracking-widest">
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className={`flex flex-col sm:flex-row items-center justify-center gap-4 ${heroSlides[currentHero].image ? 'mt-20 md:mt-80' : ''}`}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link href={heroSlides[currentHero].buttonLink as any} className="bg-white text-[#1A1A2E] px-12 py-4 font-body text-[11px] tracking-widest uppercase hover:bg-brand-rose-gold hover:text-white transition-all shadow-xl font-bold flex items-center gap-2">
-                {heroSlides[currentHero].buttonText} <ArrowRight size={14} />
+              <Link href={heroSlides[currentHero].buttonLink as any} className="bg-white text-[#1A1A2E] px-10 py-4 md:px-12 md:py-5 font-body text-[10px] md:text-[11px] tracking-[0.2em] uppercase hover:bg-brand-rose-gold hover:text-white transition-all shadow-2xl font-bold flex items-center gap-3 active:scale-95">
+                {heroSlides[currentHero].buttonText} <ArrowRight size={16} />
               </Link>
             </motion.div>
           </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,9 +23,11 @@ type AuthForm = z.infer<typeof authSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
   const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const { login, user } = useAuthStore();
+  const { login, user, isLoggedIn } = useAuthStore();
   const { mergeGuestCart } = useCartStore();
 
   const {
@@ -41,14 +43,16 @@ export default function LoginPage() {
 
   // Prevent wrong access: If already logged in, redirect based on role
   useEffect(() => {
-    if (user) {
-      if (user.role === 'admin' || user.role === 'sales') {
+    if (isLoggedIn && user) {
+      if (redirectTo) {
+        router.push(redirectTo as any);
+      } else if (user.role === 'admin' || user.role === 'sales') {
         router.push(user.role === 'admin' ? '/admin/dashboard' : '/admin/products');
       } else {
         router.push('/');
       }
     }
-  }, [user, router]);
+  }, [isLoggedIn, user, router, redirectTo]);
 
   const toggleMode = () => {
     setIsRegistering(!isRegistering);
@@ -80,6 +84,9 @@ export default function LoginPage() {
           // If staff tries to login here, redirect them to admin dashboard
           toast.success(`${userData.role.toUpperCase()} authenticated! Safeguarding to Admin Portal.`);
           router.push(userData.role === 'admin' ? '/admin/dashboard' : '/admin/products');
+        } else if (redirectTo) {
+          toast.success('Welcome back! Continuing to your destination.');
+          router.push(redirectTo as any);
         } else {
           toast.success(isRegistering ? 'Account created! Welcome to Sashti Sparkle.' : 'Welcome back to Sashti Sparkle!');
           router.push('/');

@@ -6,10 +6,15 @@ import {
   ShoppingBag, Trash2, Plus, Minus, 
   ArrowRight, Heart, ShieldCheck, Truck 
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { useCartStore } from '@/lib/stores/cartStore';
 import { useWishlistStore } from '@/lib/stores/wishlistStore';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
+  const router = useRouter();
+  const { isLoggedIn } = useAuthStore();
   const { items: cartItems, removeItem, updateQuantity, clearCart } = useCartStore();
   const { addItem: addToWishlist } = useWishlistStore();
 
@@ -161,12 +166,22 @@ export default function CartPage() {
               </div>
 
               <div className="flex flex-col gap-4">
-                <Link 
-                  href={"/checkout" as any} 
+                <button 
+                  onClick={() => {
+                    if (isLoggedIn) {
+                      router.push('/checkout');
+                    } else {
+                      toast.error('Please login to continue to checkout', {
+                        icon: '🛍️',
+                        duration: 3000,
+                      });
+                      router.push('/login?redirectTo=/checkout');
+                    }
+                  }}
                   className="w-full bg-brand-teal text-white py-5 rounded-2xl font-bold tracking-[0.2em] uppercase text-xs hover:bg-brand-dark shadow-xl flex items-center justify-center gap-3 group transition-all"
                 >
                   Proceed to Checkout <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-                </Link>
+                </button>
                 
                 <div className="bg-teal-light/50 p-4 rounded-xl flex items-center gap-3">
                   <Truck size={18} className="text-brand-teal" />

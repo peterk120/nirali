@@ -21,6 +21,7 @@ interface WishlistStore {
   clearWishlist: () => void;
   getWishlistCount: () => number;
   fetchWishlist: () => Promise<void>;
+  mergeGuestWishlist: () => Promise<void>;
 }
 
 export const useWishlistStore = create<WishlistStore>()(
@@ -88,6 +89,34 @@ export const useWishlistStore = create<WishlistStore>()(
           }
         } catch (error) {
           console.error('Failed to fetch wishlist:', error);
+        }
+      },
+
+      mergeGuestWishlist: async () => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return;
+
+        const guestItems = get().items;
+        if (guestItems.length === 0) return;
+
+        try {
+          // Merge each guest item into the backend wishlist
+          for (const item of guestItems) {
+            await fetch(`${baseUrl}/wishlist`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ productId: item.productId })
+            });
+          }
+
+          // Fetch fresh list from server
+          await get().fetchWishlist();
+          console.log('Guest wishlist merged successfully');
+        } catch (e) {
+          console.error('Failed to merge guest wishlist', e);
         }
       }
     }),
