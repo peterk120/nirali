@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, ShoppingBag, Star, Eye } from 'lucide-react';
 import { useWishlistStore } from '@/lib/stores/wishlistStore';
@@ -153,12 +154,19 @@ export default function ProductCard({
         </button>
 
         {/* Main Image */}
-        <div className={`w-full h-full flex items-center justify-center transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}>
+        <div className={`w-full h-full relative overflow-hidden transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}>
           {image ? (
-            <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover" />
+            <Image 
+              src={image} 
+              alt={name} 
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              className="object-cover"
+              priority={isNew} // Priority for new products (likely top of fold)
+            />
           ) : (
-            <div className="w-24 h-24 bg-brand-teal/5 rotate-45 border-2 border-brand-teal/10 flex items-center justify-center">
-              <span className="font-heading text-4xl text-brand-teal/20 -rotate-45 italic">Sparkle</span>
+            <div className="w-full h-full bg-brand-teal/5 flex items-center justify-center">
+              <span className="font-heading text-4xl text-brand-teal/20 rotate-45 italic">Sparkle</span>
             </div>
           )}
         </div>

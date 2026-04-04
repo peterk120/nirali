@@ -175,11 +175,7 @@ export async function getDresses(filters?: {
   return fetcher(endpoint);
 }
 
-export async function getNewArrivals(limit: number = 4): Promise<ApiResponse<{
-  success: boolean,
-  data: Product[],
-  count: number
-}>> {
+export async function getNewArrivals(limit: number = 4): Promise<ApiResponse<PaginatedResponse<Product>>> {
   return fetcher(`/products?limit=${limit}`);
 }
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dress } from '@nirali-sai/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { showAddedToCart } from '../../../../lib/toast';
 
 // ─── Luxury Design Tokens ────────────────────────────────────────────────────
@@ -257,13 +258,9 @@ const css = `
   }
   .luxury-card:hover .card-overlay { opacity: 1; }
   .luxury-card:hover .card-img { transform: scale(1.04); }
-  .card-img-wrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  .card-img-wrap { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--stone); }
   .card-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
     transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    display: block;
   }
   .card-img-placeholder {
     width: 100%;
@@ -581,7 +578,11 @@ const transformDressToCardProps = (dress: Dress) => ({
 });
 
 interface DressCatalogClientProps {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Record<string, string | string | undefined>;
+  initialData?: {
+    dresses: Dress[];
+    pagination: any;
+  };
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -720,9 +721,15 @@ function LuxuryDressCard({
         // Navigate to dress details page
         window.location.href = `/catalog/dresses/${dress.slug}`;
       }}>
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', height: '100%' }}>
           {dress.image ? (
-            <img src={dress.image} alt={dress.name} className="list-img" />
+            <Image 
+              src={dress.image} 
+              alt={dress.name} 
+              fill 
+              className="list-img object-cover"
+              sizes="200px"
+            />
           ) : (
             <div style={{ width: '100%', height: '100%', background: 'var(--stone)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>👗</div>
           )}
@@ -765,7 +772,14 @@ function LuxuryDressCard({
     }}>
       <div className="card-img-wrap">
         {dress.image ? (
-          <img src={dress.image} alt={dress.name} className="card-img" />
+          <Image 
+            src={dress.image} 
+            alt={dress.name} 
+            fill 
+            className="card-img object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={false}
+          />
         ) : (
           <div className="card-img-placeholder">👗</div>
         )}
@@ -867,17 +881,15 @@ function LuxuryDressCard({
                 margin: '0 auto 24px',
                 borderRadius: '4px',
                 overflow: 'hidden',
-                background: '#F5E6E8'
+                background: '#F5E6E8',
+                position: 'relative'
               }}
             >
-              <img
+              <Image
                 src={dress.image || '/placeholder-product.jpg'}
                 alt={dress.name}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
+                fill
+                className="object-cover"
               />
             </div>
 
@@ -1041,14 +1053,15 @@ function LuxuryDressCard({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams }) => {
+const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams, initialData }) => {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [dresses, setDresses] = useState<Dress[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dresses, setDresses] = useState<Dress[]>(initialData?.dresses || []);
+  const [loading, setLoading] = useState(!initialData);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [hasMore, setHasMore] = useState(false);
+  const [pagination, setPagination] = useState(initialData?.pagination || null);
+  const [hasMore, setHasMore] = useState(initialData?.pagination?.hasNextPage || false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -1100,7 +1113,6 @@ const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams })
             isAvailable: product.stock > 0,
             rating: 4.5,
             reviewCount: 5,
-            // ✅ slug built here so routing always works
             slug: product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             tags: [product.category],
             price: product.price,
@@ -1111,7 +1123,8 @@ const DressCatalogClient: React.FC<DressCatalogClientProps> = ({ searchParams })
             isFavorite: false,
           }));
           setDresses(fetchedDresses);
-          setHasMore(result.hasMore || result.data.length === (result.pageSize || 12));
+          setPagination(result.pagination);
+          setHasMore(result.pagination?.hasNextPage || false);
         }
       } catch (error) {
         console.error('Error fetching products:', error);

@@ -73,23 +73,33 @@ export async function GET(request: NextRequest) {
       query.$text = { $search: search };
     }
 
-    // Fetch products from MongoDB
-    const limitQuery = searchParams.get('limit');
-    const limit = limitQuery ? parseInt(limitQuery, 10) : 0;
+    // Pagination logic
+    const pageNum = parseInt(searchParams.get('page') || '1', 10);
+    const limitNum = parseInt(searchParams.get('limit') || '12', 10);
+    const skipNum = (pageNum - 1) * limitNum;
 
-    // Sort logic already has `{ createdAt: -1 }` to handle the 'latest first' rule naturally, meaning no backend change needed for auto-update logic!
-    const productsQuery = Product.find(query).sort({ createdAt: -1 });
+    // Fetch products and total count
+    const [products, totalCount] = await Promise.all([
+      Product.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skipNum)
+        .limit(limitNum),
+      Product.countDocuments(query)
+    ]);
 
-    if (limit > 0) {
-      productsQuery.limit(limit);
-    }
-
-    const products = await productsQuery;
+    const totalPages = Math.ceil(totalCount / limitNum);
 
     return Response.json({
       success: true,
       data: products,
-      count: products.length
+      pagination: {
+        currentPage: pageNum,
+        totalPages: totalPages,
+        totalItems: totalCount,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
     });
   } catch (error) {
     console.error('Error fetching products:', error);

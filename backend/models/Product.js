@@ -122,6 +122,8 @@ ProductSchema.pre('save', function(next) {
 ProductSchema.index({ brand: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ status: 1 });
+ProductSchema.index({ price: 1 });
+ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ name: 'text', description: 'text' });
 
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);

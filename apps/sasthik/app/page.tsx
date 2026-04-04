@@ -1,42 +1,17 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowRight, ChevronLeft, ChevronRight, CheckCircle, 
-  Truck, RotateCcw, ShieldCheck, Star, Camera, Mail, ShoppingBag, Sparkles
+  ArrowRight, CheckCircle, Truck, RotateCcw, ShieldCheck, Star, Camera, Sparkles
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { getProducts } from '@/lib/api';
-import { toast } from 'react-hot-toast';
+import HeroCarousel from '@/components/home/HeroCarousel';
+import SubscriptionForm from '@/components/home/SubscriptionForm';
 
-// ── Dummy Data ──
-interface HeroSlide {
-  title: string;
-  subtitle: string;
-  color: string;
-  image: string;
-  mobileImage?: string;
-  buttonText: string;
-  buttonLink: string;
-  position?: string;
-}
-
-const heroSlides: HeroSlide[] = [
-  { title: "", subtitle: "", color: "bg-brand-teal", image: "/img/banner 1.png", mobileImage: "/img/banner 1 mob.png", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery" },
-  { title: "", subtitle: "", color: "bg-brand-rose-gold", image: "/img/banner 2.png", mobileImage: "/img/banner 2 mob.png", buttonText: "Explore Collection", buttonLink: "/jewellery" },
-  { title: "", subtitle: "", color: "bg-[#1A1A2E]", image: "/img/banner 3.png", mobileImage: "/img/banner 3 mob.png", buttonText: "Shop New Arrivals", buttonLink: "/jewellery" },
-];
-
-const occasions = [
-  { name: 'Bridal', image: '', count: '120+ Styles' },
-  { name: 'Wedding Guest', image: '', count: '85+ Styles' },
-  { name: 'Festive', image: '', count: '200+ Styles' },
-  { name: 'Everyday Lounge', image: '', count: '45+ Styles' },
-];
+export const metadata: Metadata = {
+  title: 'Saasthik — Artisanal Indian Jewelry & Bridal Sets',
+  description: 'Explore our exquisite collection of premium Indian jewelry, from temple sets to modern minimal pieces. Tarnish-resistant, hypoallergenic, and crafted for your special moments.',
+};
 
 const categories = [
   { name: 'Earrings', icon: '💍', href: '/jewellery?category=Earrings' },
@@ -49,185 +24,24 @@ const categories = [
   { name: 'Hair Access.', icon: '👱‍♀️', href: '/jewellery?category=Hair' },
 ];
 
-export default function HomePage() {
-  const router = useRouter();
-  const [currentHero, setCurrentHero] = useState(0);
-  const [trendingProducts, setTrendingProducts] = useState<any[]>([]);
-  const [bestsellers, setBestsellers] = useState<any[]>([]);
-  const [subscribeEmail, setSubscribeEmail] = useState('');
-  const [isSubscribing, setIsSubscribing] = useState(false);
-  const [loading, setLoading] = useState(true);
+export default async function HomePage() {
+  // Fetch products on the server
+  const response = await getProducts({ limit: 8 });
+  
+  const allProducts = response.success && response.data && 'data' in response.data 
+    ? response.data.data 
+    : (Array.isArray(response.data) ? response.data : []);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (token && user.role === 'admin') {
-      router.push('/admin/dashboard');
-    }
-  }, [router]);
-
-  useEffect(() => {
-    const fetchPageData = async () => {
-      try {
-        const response = await getProducts({ limit: 8 });
-        if (response.success && response.data) {
-          const allProducts = Array.isArray(response.data) ? response.data : (response.data as any).data || [];
-          const trending = allProducts.slice(0, 4);
-          setTrendingProducts(trending);
-          
-          // If we have more than 4 products, use the next 4 for bestsellers
-          // Otherwise, reuse the first 4 (or whatever we have) to keep the section full
-          const best = allProducts.length > 4 ? allProducts.slice(4, 8) : trending;
-          setBestsellers(best);
-        }
-      } catch (error) {
-        console.error('Failed to fetch products', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPageData();
-  }, []);
-
-  const handleSubscribe = async () => {
-    if (!subscribeEmail) return;
-    setIsSubscribing(true);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/subscribers/subscribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: subscribeEmail })
-      });
-      const data = await response.json();
-      if (data.success) {
-        toast.success(data.message || 'Successfully subscribed!');
-        setSubscribeEmail('');
-      } else {
-        toast.error(data.message || 'Failed to subscribe');
-      }
-    } catch (error) {
-      toast.error('An error occurred. Please try again.');
-    } finally {
-      setIsSubscribing(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentHero((prev) => (prev + 1) % heroSlides.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
+  const trendingProducts = allProducts.slice(0, 4);
+  const bestsellers = allProducts.length > 4 ? allProducts.slice(4, 8) : trendingProducts;
 
   return (
     <div className="flex flex-col bg-white overflow-hidden">
       
-      {/* [3A] Hero Banner Carousel */}
-      <section className="relative w-full h-[80vh] h-[80dvh] md:h-[650px] overflow-hidden bg-brand-dark">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentHero}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
-            className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center`}
-          >
-            {/* Hero Image Layer */}
-            <div className="absolute inset-0 overflow-hidden z-0">
-              {heroSlides[currentHero].image ? (
-                <>
-                  {/* Desktop Image */}
-                  <div className="hidden md:block absolute inset-0">
-                    <Image 
-                      src={heroSlides[currentHero].image}
-                      alt={heroSlides[currentHero].title || "Banner"}
-                      fill
-                      priority
-                      className="object-cover object-center"
-                      sizes="100vw"
-                    />
-                  </div>
-                  
-                  {/* Mobile Image (Optimized Portrait) */}
-                  <div className="block md:hidden absolute inset-0">
-                    <Image 
-                      src={heroSlides[currentHero].mobileImage || heroSlides[currentHero].image}
-                      alt={heroSlides[currentHero].title || "Banner"}
-                      fill
-                      priority
-                      className="object-cover object-center"
-                      sizes="100vw"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-black/20 md:bg-black/10" />
-                </>
-              ) : (
-                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-              )}
-            </div>
-            
-            {/* Content Overaly Layer */}
-            <div className="container mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center justify-center text-center text-white h-full">
-              {heroSlides[currentHero].title && !heroSlides[currentHero].image && (
-                <div className="max-w-4xl mx-auto">
-                  <motion.span 
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-[10px] md:text-xs tracking-[0.4em] uppercase font-bold mb-4 block text-brand-rose-gold"
-                  >
-                    Exclusive Collection 2026
-                  </motion.span>
-                  <motion.h1 
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="font-heading text-[clamp(2rem,10vw,4.5rem)] leading-[1.1] mb-6 italic"
-                  >
-                    {heroSlides[currentHero].title}
-                  </motion.h1>
-                  <motion.p 
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="font-body text-lg md:text-2xl mb-10 opacity-90"
-                  >
-                    {heroSlides[currentHero].subtitle}
-                  </motion.p>
-                </div>
-              )}
-              
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className={`flex flex-col sm:flex-row items-center justify-center gap-4 ${heroSlides[currentHero].image ? 'mt-20 md:mt-80' : ''}`}
-              >
-                <Link href={heroSlides[currentHero].buttonLink as any} className="bg-white text-[#1A1A2E] px-12 py-4 font-body text-[11px] tracking-widest uppercase hover:bg-brand-rose-gold hover:text-white transition-all shadow-xl font-bold flex items-center gap-2">
-                  {heroSlides[currentHero].buttonText} <ArrowRight size={14} />
-                </Link>
-                {!heroSlides[currentHero].image && (
-                  <Link href={"/jewellery" as any} className="border border-white/30 text-white px-12 py-4 font-body text-[11px] tracking-widest uppercase hover:bg-white/10 transition-all">View Collection</Link>
-                )}
-              </motion.div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-        
-        {/* Carousel Indicators */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-          {heroSlides.map((_, i) => (
-            <button 
-              key={i} 
-              onClick={() => setCurrentHero(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${currentHero === i ? 'bg-brand-rose-gold w-8' : 'bg-white/40'}`}
-            />
-          ))}
-        </div>
-      </section>
+      {/* Hero Banner Carousel (Client Component) */}
+      <HeroCarousel />
 
-      {/* [3B] USP Strip */}
+      {/* USP Strip */}
       <section className="bg-teal-light py-8 md:py-12 border-b border-teal-medium">
         <div className="container mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
@@ -244,7 +58,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* [3C] Shop by Category — Circular Icon Grid */}
+      {/* Shop by Category */}
       <section className="py-20 md:py-24 bg-white">
         <div className="container mx-auto px-6 overflow-x-auto no-scrollbar">
           <div className="flex justify-between min-w-[800px] md:min-w-0">
@@ -260,7 +74,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* [3D] Shop by Style — Fashion Editorial Grid */}
+      {/* Shop by Style */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           <Link href={"/jewellery" as any} className="relative h-[400px] md:h-[600px] group overflow-hidden rounded-2xl shadow-luxury">
@@ -272,9 +86,7 @@ export default function HomePage() {
                 backgroundPosition: 'center'
               }}
             />
-            {/* Soft Gradient Color Wash Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/60 via-brand-teal/10 to-transparent z-10" />
-            
             <div className="absolute bottom-10 left-10 z-20">
               <span className="text-[10px] tracking-[0.5em] uppercase font-bold text-white/70 mb-2 block">The Collection</span>
               <h3 className="font-heading text-4xl text-white italic tracking-wide">Heritage Look</h3>
@@ -291,9 +103,7 @@ export default function HomePage() {
                 backgroundPosition: 'center'
               }}
             />
-            {/* Muted Rose Pink Gradient Wash */}
             <div className="absolute inset-0 bg-gradient-to-t from-brand-rose-gold/40 via-brand-rose-gold/5 to-transparent z-10" />
-            
             <div className="absolute bottom-10 left-10 z-20">
               <span className="text-[10px] tracking-[0.5em] uppercase font-bold text-white/70 mb-2 block">Daily Essentials</span>
               <h3 className="font-heading text-4xl text-white italic tracking-wide">Modern Muse</h3>
@@ -303,7 +113,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* [3E] Trending Now Product Carousel */}
+      {/* Trending Now */}
       <section className="py-24 bg-teal-light/30">
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-end mb-12">
@@ -311,23 +121,17 @@ export default function HomePage() {
               <h2 className="font-heading text-3xl md:text-5xl text-brand-dark mb-2">Trending This Week</h2>
               <div className="w-16 h-1 bg-brand-rose-gold" />
             </div>
-            <Link href="#" className="font-body text-xs tracking-widest uppercase text-brand-rose-gold hover:text-brand-teal transition-colors flex items-center gap-2">View All <ArrowRight size={14} /></Link>
+            <Link href="/jewellery" className="font-body text-xs tracking-widest uppercase text-brand-rose-gold hover:text-brand-teal transition-colors flex items-center gap-2">View All <ArrowRight size={14} /></Link>
           </div>
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 animate-pulse">
-               {[...Array(4)].map((_, i) => <div key={i} className="h-80 bg-teal-light rounded-xl" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-              {trendingProducts.map(product => (
-                <ProductCard key={product.id || product._id} {...product} id={product.id || product._id} />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+            {trendingProducts.map((product: any) => (
+              <ProductCard key={product.id || product._id} {...product} id={product.id || product._id} />
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 3G: Bestsellers Carousel (Static Grid for now) */}
+      {/* Bestsellers */}
       <section className="py-24 bg-white overflow-hidden">
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-end mb-12">
@@ -336,21 +140,15 @@ export default function HomePage() {
               <div className="w-16 h-1 bg-brand-rose-gold" />
             </div>
           </div>
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 animate-pulse">
-               {[...Array(4)].map((_, i) => <div key={i} className="h-80 bg-teal-light rounded-xl" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-              {bestsellers.map(product => (
-                <ProductCard key={product.id || product._id} {...product} id={product.id || product._id} />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+            {bestsellers.map((product: any) => (
+              <ProductCard key={product.id || product._id} {...product} id={product.id || product._id} />
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* [3H] The Saasthik Promise — High-End Editorial Trust Strip */}
+      {/* The Saasthik Promise */}
       <section className="py-24 bg-[#FAF9F6]">
         <div className="container mx-auto px-6 text-center mb-16">
           <span className="text-[10px] tracking-[0.4em] uppercase font-bold text-brand-rose-gold mb-4 block">Our Commitment</span>
@@ -380,54 +178,42 @@ export default function HomePage() {
             },
           ].map((item, i) => (
             <div key={i} className="bg-white p-10 rounded-[2rem] border border-gray-100 shadow-luxury hover:shadow-2xl transition-all duration-500 group relative overflow-hidden flex flex-col items-center text-center">
-              {/* Decorative Corner Sparkle */}
               <div className="absolute -top-4 -right-4 text-brand-rose-gold/5 group-hover:text-brand-rose-gold/20 transition-colors">
                 <Sparkles size={80} />
               </div>
-              
               <div className="w-20 h-20 bg-teal-light/30 rounded-full flex items-center justify-center text-brand-teal mb-8 border border-teal-light group-hover:bg-brand-teal group-hover:text-white transition-all duration-500 transform group-hover:rotate-[360deg]">
                 <item.icon size={32} strokeWidth={1} />
               </div>
-              
               <span className="text-[9px] tracking-[0.3em] uppercase font-bold text-brand-rose-gold mb-3">{item.highlight}</span>
               <h4 className="font-heading text-2xl mb-4 text-brand-dark italic">{item.title}</h4>
               <p className="font-body text-[13px] text-gray-500 leading-relaxed font-light">{item.sub}</p>
-              
               <div className="mt-8 w-8 h-px bg-gray-200 group-hover:w-16 group-hover:bg-brand-rose-gold transition-all duration-500" />
             </div>
           ))}
         </div>
       </section>
 
-      {/* [3J] Bridal Corner — Custom Split Layout Editorial */}
+      {/* Bridal Corner */}
       <section className="container mx-auto px-6 py-24">
         <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col lg:flex-row shadow-luxury border border-gray-100 min-h-[600px]">
-          {/* Left Content Panel */}
           <div className="w-full lg:w-1/2 p-8 md:p-16 lg:p-20 flex flex-col items-start justify-center gap-6 md:gap-8 bg-white">
             <span className="px-3 py-1 bg-brand-rose-gold text-white text-[10px] tracking-[0.3em] font-bold rounded-sm uppercase">Featured</span>
             <h2 className="font-heading text-[clamp(2.5rem,12vw,5rem)] text-brand-dark italic leading-[1.1]">Complete <br className="hidden md:block" /> Bridal Sets</h2>
             <p className="font-body text-gray-500 max-w-sm leading-relaxed text-sm md:text-base">
               Curated master-sets featuring Necklace, Earrings, Maang Tikka, and Bangles. Everything you need for your wedding ceremony in one box.
             </p>
-            
             <div className="flex flex-col gap-1">
               <span className="text-[10px] uppercase tracking-[0.2em] text-brand-rose-gold font-bold">Starting From</span>
               <span className="text-4xl font-heading text-brand-teal italic tracking-tight">₹1,499</span>
             </div>
-            
             <Link href={"/jewellery/bridal" as any} className="bg-brand-teal text-white px-10 py-4 font-body text-[11px] tracking-[0.2em] uppercase font-bold flex items-center gap-3 hover:bg-brand-dark transition-all shadow-lg group">
               Explore Bridal <ArrowRight size={16} className="transition-transform group-hover:translate-x-2" />
             </Link>
           </div>
-          
-          {/* Right Visual Panel */}
           <div className="w-full lg:w-1/2 relative bg-[#F0F7F7] flex items-center justify-center p-12 overflow-hidden">
-            {/* Faded Watermark Text */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <span className="font-heading text-[20vw] lg:text-[12vw] text-brand-teal/5 italic -rotate-12 select-none">Bridal</span>
             </div>
-            
-            {/* Tilted Card Overlay Effect */}
             <div className="relative w-full max-w-md aspect-[4/5] transform rotate-3 shadow-2xl rounded-2xl overflow-hidden group">
               <div 
                 className="absolute inset-0 transition-transform duration-1000 group-hover:scale-110"
@@ -439,15 +225,11 @@ export default function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/20 to-transparent" />
             </div>
-            
-            {/* Subtle decorative elements */}
-            <div className="absolute top-10 right-10 w-24 h-24 border border-brand-teal/10 rounded-full animate-pulse" />
-            <div className="absolute bottom-20 left-10 w-12 h-12 bg-white/40 backdrop-blur-sm rounded-full" />
           </div>
         </div>
       </section>
 
-      {/* [3K] UGC Strip */}
+      {/* UGC Strip */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-6 text-center mb-12">
            <h2 className="font-heading text-3xl text-brand-dark italic">Real Customers, Real Sparkle 💛</h2>
@@ -464,7 +246,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* [3M] Newsletter Signup */}
+      {/* Newsletter Signup */}
       <section className="bg-brand-teal py-20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
@@ -472,25 +254,7 @@ export default function HomePage() {
             <h2 className="font-heading text-4xl italic">Join the Sparkle Club</h2>
             <p className="font-body text-white/70 tracking-widest uppercase text-xs">Get 10% off your first order & weekly new arrivals alert</p>
           </div>
-          <div className="w-full max-w-lg flex flex-col sm:flex-row gap-4">
-            <div className="flex-grow flex items-center bg-white/10 backdrop-blur-md rounded-lg px-6 py-4 border border-white/20">
-              <Mail size={18} className="text-white/60 mr-3" />
-              <input 
-                type="email" 
-                placeholder="Email Address"
-                value={subscribeEmail}
-                onChange={(e) => setSubscribeEmail(e.target.value)}
-                className="bg-transparent border-none text-white placeholder:text-white/60 focus:ring-0 w-full text-sm font-body"
-              />
-            </div>
-            <button 
-              onClick={handleSubscribe}
-              disabled={isSubscribing}
-              className="bg-white text-brand-teal px-10 py-4 font-body text-[11px] tracking-widest uppercase font-bold hover:bg-brand-rose-gold hover:text-white transition-all shadow-lg disabled:opacity-50"
-            >
-              {isSubscribing ? 'Subscribing...' : 'Subscribe'}
-            </button>
-          </div>
+          <SubscriptionForm />
         </div>
       </section>
 

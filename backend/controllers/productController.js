@@ -7,39 +7,46 @@ const getProducts = async (req, res) => {
     const Product = req.dbModels.Product;
     const { brand, category, search, limit } = req.query;
     
-    let query = {};
+    const pageNum = parseInt(req.query.page, 10) || 1;
+    const limitNum = parseInt(req.query.limit, 10) || 20;
+    const skipNum = (pageNum - 1) * limitNum;
+
+    // Build query
+    let queryObj = {};
     if (category) {
-      // Case-insensitive matching + basic plural/singular support
       const singular = category.toLowerCase().replace(/s$/, '');
-      query.category = { $regex: new RegExp(`^${singular}s?$`, 'i') };
+      queryObj.category = { $regex: new RegExp(`^${singular}s?$`, 'i') };
     }
-    if (brand) query.brand = brand;
+    if (brand) queryObj.brand = brand;
     
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
-      
-      if (search.toLowerCase().includes('bangel')) {
-        query.$or.push({ category: /bangle/i });
-      }
+      // Use text search for performance and relevance
+      queryObj.$text = { $search: search };
     }
 
-    const limitNum = limit ? parseInt(limit, 10) : 0;
-    const productsQuery = Product.find(query).sort({ createdAt: -1 });
+    // Default fields for listing views to reduce payload size
+    const selectFields = 'name price originalPrice image slug category brand stock status averageRating totalReviews';
 
-    if (limitNum > 0) {
-      productsQuery.limit(limitNum);
-    }
-
-    const products = await productsQuery;
+    const [products, totalCount] = await Promise.all([
+      Product.find(queryObj)
+        .select(selectFields)
+        .sort({ createdAt: -1 })
+        .skip(skipNum)
+        .limit(limitNum),
+      Product.countDocuments(queryObj)
+    ]);
 
     res.status(200).json({
       success: true,
       data: products,
-      count: products.length
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalCount / limitNum),
+        totalItems: totalCount,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
+        hasPrevPage: pageNum > 1
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
