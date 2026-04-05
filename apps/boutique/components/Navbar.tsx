@@ -196,7 +196,7 @@ export default function Navbar() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.8 }}>
             <Phone size={11} />
-            <span>+91 98765 XXXXX</span>
+            <span>+91 93426 61671</span>
           </div>
         </div>
       </div>

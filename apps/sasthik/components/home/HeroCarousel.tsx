@@ -17,20 +17,23 @@ interface HeroSlide {
 }
 
 const heroSlides: HeroSlide[] = [
-  { title: "", subtitle: "", color: "bg-brand-teal", image: "/img/banner 1.png", mobileImage: "/img/banner 1 mob.png", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery" },
-  { title: "", subtitle: "", color: "bg-brand-rose-gold", image: "/img/banner 2.png", mobileImage: "/img/banner 2 mob.png", buttonText: "Explore Collection", buttonLink: "/jewellery" },
-  { title: "", subtitle: "", color: "bg-[#1A1A2E]", image: "/img/banner 3.png", mobileImage: "/img/banner 3 mob.png", buttonText: "Shop New Arrivals", buttonLink: "/jewellery" },
+  { title: "", subtitle: "", color: "bg-brand-teal/5", image: "/img/banner 1.webp", mobileImage: "/img/banner 1 mob.webp", buttonText: "Shop Temple Jewelry", buttonLink: "/jewellery" },
+  { title: "", subtitle: "", color: "bg-brand-rose-gold/5", image: "/img/banner 2.webp", mobileImage: "/img/banner 2 mob.webp", buttonText: "Explore Collection", buttonLink: "/jewellery" },
+  { title: "", subtitle: "", color: "bg-brand-dark/5", image: "/img/banner 3.webp", mobileImage: "/img/banner 3 mob.webp", buttonText: "Shop New Arrivals", buttonLink: "/jewellery" },
 ];
 
 export default function HeroCarousel() {
   const [currentHero, setCurrentHero] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
+    // Reset image loaded on slide change
+    setImageLoaded(false);
     const timer = setInterval(() => {
       setCurrentHero((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [currentHero]);
 
   return (
     <section className="relative w-full h-[80vh] h-[80dvh] md:h-[75vh] md:min-h-[500px] md:max-h-[700px] overflow-hidden bg-brand-dark">
@@ -40,33 +43,45 @@ export default function HeroCarousel() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
           className={`absolute inset-0 ${heroSlides[currentHero].color} flex items-center justify-center`}
         >
           <div className="absolute inset-0 overflow-hidden z-0">
             {heroSlides[currentHero].image ? (
               <>
-                <div className="hidden md:block absolute inset-0">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: imageLoaded ? 1 : 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="hidden md:block absolute inset-0"
+                >
                   <Image 
                     src={heroSlides[currentHero].image}
                     alt={heroSlides[currentHero].title || "Banner"}
                     fill
                     priority
+                    onLoad={() => setImageLoaded(true)}
                     className="object-cover object-center"
                     sizes="100vw"
                   />
-                </div>
-                <div className="block md:hidden absolute inset-0">
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: imageLoaded ? 1 : 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="block md:hidden absolute inset-0"
+                >
                   <Image 
                     src={heroSlides[currentHero].mobileImage || heroSlides[currentHero].image}
                     alt={heroSlides[currentHero].title || "Banner"}
                     fill
                     priority
+                    onLoad={() => setImageLoaded(true)}
                     className="object-cover object-center"
                     sizes="100vw"
                   />
-                </div>
-                <div className="absolute inset-0 bg-black/20 md:bg-black/10" />
+                </motion.div>
+                <div className="absolute inset-0 bg-black/20 md:bg-black/10 transition-opacity duration-700" style={{ opacity: imageLoaded ? 1 : 0 }} />
               </>
             ) : (
               <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />

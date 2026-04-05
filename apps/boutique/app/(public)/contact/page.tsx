@@ -20,20 +20,20 @@ const ContactPage = () => {
     {
       icon: <Phone className="w-6 h-6 text-brand-gold" />,
       title: "Call Us",
-      detail: "+91 98765 43210",
+      detail: "+91 93426 61671",
       subtext: "Mon-Sat 10AM-8PM"
     },
     {
       icon: <Mail className="w-6 h-6 text-brand-gold" />,
       title: "Email Us",
-      detail: "info@niralisaiboutique.com",
+      detail: "niralisaijewels@gmail.com",
       subtext: "We'll respond within 24 hours"
     },
     {
       icon: <MapPin className="w-6 h-6 text-brand-gold" />,
       title: "Visit Us",
-      detail: "123 Fashion Street",
-      subtext: "Hyderabad, Telangana 500001"
+      detail: "Shop No. 17, Kandhaswarna Shopping Mall",
+      subtext: "Salem, Tamil Nadu 636016"
     },
     {
       icon: <Clock className="w-6 h-6 text-brand-gold" />,
@@ -47,17 +47,17 @@ const ContactPage = () => {
     {
       icon: <Instagram className="w-6 h-6" />,
       name: "Instagram",
-      url: "https://instagram.com/niralisaiboutique"
+      url: "https://instagram.com/niralisaijewels"
     },
     {
       icon: <Facebook className="w-6 h-6" />,
       name: "Facebook",
-      url: "https://facebook.com/niralisaiboutique"
+      url: "https://facebook.com/niralisaijewels"
     },
     {
       icon: <Twitter className="w-6 h-6" />,
       name: "Twitter",
-      url: "https://twitter.com/niralisaiboutique"
+      url: "https://twitter.com/niralisaijewels"
     }
   ];
 
@@ -231,7 +231,7 @@ const ContactPage = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-rose focus:border-brand-rose"
-                      placeholder="+91 98765 43210"
+                      placeholder="+91 93426 61671"
                     />
                   </div>
                   
@@ -338,8 +338,8 @@ const ContactPage = () => {
               <div className="aspect-video bg-gradient-to-br from-brand-rose/20 to-brand-gold/20 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <MapPin className="w-12 h-12 text-brand-rose mx-auto mb-4" />
-                  <p className="text-lg font-medium text-gray-900">123 Fashion Street, Hyderabad</p>
-                  <p className="text-gray-600">Telangana 500001, India</p>
+                  <p className="text-lg font-medium text-gray-900">Shop No. 17, Kandhaswarna Shopping Mall</p>
+                  <p className="text-gray-600">Fairlands, Salem, TN 636016</p>
                   <Button className="mt-4 bg-brand-rose hover:bg-brand-rose/90">
                     Get Directions
                   </Button>

@@ -153,7 +153,14 @@ export default function Footer() {
               Handcrafted within India
             </p>
             <p className="text-[9px] tracking-[0.3em] uppercase text-brand-rose-gold/60 font-bold mt-0.5">
-               Prajan
+               <a 
+                href="https://prajan-portfoli.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-brand-rose-gold transition-colors duration-300"
+               >
+                 Prajan
+               </a>
             </p>
           </div>
         </div>

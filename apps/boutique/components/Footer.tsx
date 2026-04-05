@@ -45,9 +45,9 @@ const supportLinks = [
 ];
 
 const contactItems: { Icon: React.ElementType; text: string; href?: string }[] = [
-  { Icon: MapPin, text: '123 Fashion Street, Mumbai 400001' },
-  { Icon: Phone,  text: '+91 98765 43210',            href: 'tel:+919876543210' },
-  { Icon: Mail,   text: 'info@niralisaiboutique.com', href: 'mailto:info@niralisaiboutique.com' },
+  { Icon: MapPin, text: 'Shop No. 17, Kandhaswarna Shopping Mall, Saradha College Main Road, Fairlands, Salem, TN 636016' },
+  { Icon: Phone,  text: '+91 93426 61671',            href: 'tel:+919342661671' },
+  { Icon: Mail,   text: 'niralisaijewels@gmail.com', href: 'mailto:niralisaijewels@gmail.com' },
 ];
 
 const socialLinks: { Icon: React.ElementType; href: string }[] = [
@@ -159,7 +159,7 @@ export default function Footer() {
 
             {/* WhatsApp CTA */}
             <a
-              href="https://wa.me/919876543210"
+              href="https://wa.me/919342661671"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -214,7 +214,16 @@ export default function Footer() {
               Made with <Heart size={10} style={{ color: '#C96E82' }} fill="#C96E82" /> in India
             </p>
             <p style={{ fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,110,130,0.5)', fontWeight: 500, margin: 0 }}>
-              Crafted by Prajan
+              <a 
+                href="https://prajan-portfoli.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => ((e.target as HTMLElement).style.color = '#FFF8F8')}
+                onMouseLeave={e => ((e.target as HTMLElement).style.color = 'inherit')}
+              >
+                Crafted by Prajan
+              </a>
             </p>
           </div>
         </div>
