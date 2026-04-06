@@ -1,8 +1,15 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { playfairDisplay, dmSans } from '@/lib/fonts';
 import Providers from '../components/Providers';
 import React from 'react';
+
+export const viewport: Viewport = {
+  themeColor: '#C0436A',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -17,12 +24,6 @@ export const metadata: Metadata = {
     images: ['/og-image.jpg'], // Placeholder for brand image
     type: 'website',
     url: 'https://www.niralisaiboutique.com',
-  },
-  themeColor: '#C0436A', // brand-rose
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
   },
   // manifest: '/manifest.json', // Disabled PWA manifest to avoid 404 errors
 };

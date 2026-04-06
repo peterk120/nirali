@@ -6,6 +6,12 @@ const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../../'),
   experimental: {
     typedRoutes: true,
+    outputFileTracingExcludes: {
+      '*': [
+        '**/node_modules/@nirali-sai/boutique/**',
+        '**/node_modules/sharp/**',
+      ],
+    },
   },
   transpilePackages: [
     '@nirali-sai/ui',
